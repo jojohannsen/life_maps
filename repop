@@ -1,0 +1,6 @@
+set -x
+rm data/*
+echo "SHOULD CREATE"
+./repop.sh
+echo "SHOULD FIND"
+./repop.sh
