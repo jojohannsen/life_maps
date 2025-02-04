@@ -15,7 +15,7 @@ db = database(DB_PATH)
 CITY_NAV_WIDTH = 'w-48'
 
 class CityLocation:
-    id:int; username:str; name:str; lat:float; lon:float; zoomlevel:int
+    id:int; username:str; name:str; lat:float; lon:float; zoomlevel:int; active:bool
 
 city_locs = db.create(CityLocation, pk='id')
 active_user = 'johannes'  # default user
@@ -45,14 +45,7 @@ def city_buttons():
         id='city-buttons-container',
         cls='space-y-2'
     )
-
-def create_city_record(username: str, city_name: str) -> CityLocation:
-    return city_locs.insert(CityLocation(
-        username=username,
-        name=city_name,
-        zoomlevel=15
-    ))
-
+    
 def delete_city_record(city_id: int):
     city_locs.delete(city_id)
 
@@ -136,14 +129,32 @@ def change_city(city_id: int):
     except GeocoderTimedOut:
         return "Geocoding timed out"
 
+def get_active_city() -> CityLocation | None:
+    """Get the currently active city for the current user, or first city if none active"""
+    cities = city_locs()
+    # First try to find a city marked as active
+    active = next((city for city in cities if getattr(city, 'active', False)), None)
+    # If no active city found, use the first city
+    if not active and cities:
+        active = cities[0]
+        active.active = True
+        city_locs.update(active)
+    return active
+
 @rt
 def index():
     # Create Mapbox container with initialization script
     map_container = Div(
         id="map",
         cls="w-full h-full rounded-lg",
-        style="position: relative;"
+        style="position: relative; height: calc(100vh - 2rem);"
     )
+    
+    # Get active city for initial map position
+    active_city = get_active_city()
+    print(f"Active city: {active_city}")
+    initial_center = f"[{active_city.lon}, {active_city.lat}]" if active_city else "[-74.5, 40]"
+    initial_zoom = active_city.zoomlevel if active_city else 9
     
     map_script = Div(
         Script(f"""
@@ -152,8 +163,8 @@ def index():
                 container: 'map',
                 style: 'mapbox://styles/mapbox/streets-v12',
                 projection: 'mercator',
-                center: [-74.5, 40],
-                zoom: 9,
+                center: {initial_center},
+                zoom: {initial_zoom},
                 antialias: true
             }});
 
@@ -178,14 +189,14 @@ def index():
     right_content = Div(
         map_container,
         map_script,
-        cls="flex-1 p-2 space-y-4 h-screen"
+        cls="flex-1 p-2 h-screen overflow-hidden"
     )
     
     # Create layout with sidebar and right content
     layout = Div(
         Div(select_user(), city_buttons(), cls="p-2 h-screen overflow-y-auto"),
         right_content,
-        cls="flex h-screen"
+        cls="flex h-screen overflow-hidden"
     )
     
     return Title("Map Dashboard"), layout
