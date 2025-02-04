@@ -81,6 +81,23 @@ def change_user(username: str):
     global active_user
     active_user = username
     city_locs.xtra(username=active_user)
+    
+    # Get active city for the new user
+    active_city = get_active_city()
+    
+    if active_city:
+        # Return both the map update and city buttons
+        return Div(
+            Script(f"""
+                map.flyTo({{
+                    center: [{active_city.lon}, {active_city.lat}],
+                    zoom: {active_city.zoomlevel},
+                    essential: true
+                }});
+            """),
+            city_buttons()
+        )
+    
     return city_buttons()
 
 
