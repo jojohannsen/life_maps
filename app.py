@@ -25,13 +25,15 @@ city_locs.xtra(username=active_user)  # Set initial filter
 mapbox_token = os.environ['MAPBOX_TOKEN']
 mapbox_css = Link(rel="stylesheet", href="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css")
 mapbox_js = Script(src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js")
+map_init_js = Script(src="/static/js/map-init.js")
 
 app, rt = fast_app(
     db_file=DB_PATH,
     hdrs=[
         Theme.blue.headers(),
         mapbox_css,
-        mapbox_js
+        mapbox_js,
+        map_init_js
     ]
 )
 
@@ -169,37 +171,13 @@ def index():
     
     # Get active city for initial map position
     active_city = get_active_city()
-    print(f"Active city: {active_city}")
     initial_center = f"[{active_city.lon}, {active_city.lat}]" if active_city else "[-74.5, 40]"
     initial_zoom = active_city.zoomlevel if active_city else 9
     
     map_script = Div(
         Script(f"""
-            mapboxgl.accessToken = '{mapbox_token}';
-            const map = new mapboxgl.Map({{
-                container: 'map',
-                style: 'mapbox://styles/mapbox/streets-v12',
-                projection: 'mercator',
-                center: {initial_center},
-                zoom: {initial_zoom},
-                antialias: true
-            }});
-
-            // Add navigation controls
-            map.addControl(new mapboxgl.NavigationControl());
-            
-            // Add fullscreen control
-            map.addControl(new mapboxgl.FullscreenControl());
-            
-            // Add scale control
-            map.addControl(new mapboxgl.ScaleControl({{
-                maxWidth: 80,
-                unit: 'metric'
-            }}));
-        """),
-        Script(f"""
-            // place holder for move map script
-        """, id="move-map")
+            const map = initMap('{mapbox_token}', {initial_center}, {initial_zoom});
+        """)
     )
     
     # Create right content area with map and slider
