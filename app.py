@@ -42,6 +42,7 @@ geolocator = Nominatim(user_agent="my_app")
 def city_buttons():
     user_city_data = city_locs()
     city_buttons = [make_city_button(city) for city in user_city_data]
+
     return Div(
         *city_buttons,
         id='city-buttons-container',
@@ -54,7 +55,6 @@ def delete_city_record(city_id: int):
 def make_city_button(city):
     # Add 'active' class if this is the currently selected city
     button = Button(city.name, 
-                   id=f'city-name-{city.id}',
                    hx_trigger='click',
                    hx_get=f'/change-city/{city.id}',
                    hx_target='#city-buttons-container',  # Changed target to update all buttons
@@ -173,10 +173,15 @@ def index():
     active_city = get_active_city()
     initial_center = f"[{active_city.lon}, {active_city.lat}]" if active_city else "[-74.5, 40]"
     initial_zoom = active_city.zoomlevel if active_city else 9
-    
+    apm = ""
+    for city in city_locs():
+        if city.lat and city.lon:
+            print(f"Adding marker for {city.name} at {city.lat}, {city.lon}")
+            apm += f"add_person_marker(map, {city.lat}, {city.lon});\n"
     map_script = Div(
         Script(f"""
             const map = initMap('{mapbox_token}', {initial_center}, {initial_zoom});
+            {apm}
         """)
     )
     
