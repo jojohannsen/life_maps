@@ -24,16 +24,17 @@ function initMap(mapboxToken, initialCenter, initialZoom) {
     return map;
 }
 
-function add_person_marker(map, lat, lon) {
-    console.log("Adding person marker", lat, lon)
+function add_person_marker(map, lat, lon, years) {
+    console.log("Adding person marker", lat, lon, years)
     const el = document.createElement('div');
-    const width = 100;
-    const height = 100;
+    const width = 14 + years * 2;
+    const height = 14 + years * 2;
     el.className = 'marker';
-    el.style.backgroundImage = `url(https://picsum.photos/id/111/${width}/${height})`;
+    el.style.backgroundColor = '#ff000080';
     el.style.width = `${width}px`;
     el.style.height = `${height}px`;
     el.style.backgroundSize = '100%';
+    el.style.borderRadius = '50%';
 
     el.addEventListener('click', () => {
         window.alert(marker.properties.message);

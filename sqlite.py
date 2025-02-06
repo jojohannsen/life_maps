@@ -12,12 +12,22 @@ class CityLocation:
     zoomlevel:int
     username:str
     active:bool
+    years:int
 
 city_locs = db.create(CityLocation)
 
 def city_loc_generator(data, username):
     for s in data:
-        city_loc = CityLocation(name=s, zoomlevel=10, username=username)
+        years = 1
+        if ',' in s:
+            # if part to left of comma is a number, use it as the number of years   
+            try:
+                years = int(s.split(',',1)[0])
+                s = s.split(',',1)[1]
+            except ValueError:  
+                pass
+        s = s.strip()
+        city_loc = CityLocation(name=s, zoomlevel=10, username=username, years=years)
         yield city_loc
 
 # Define the default username

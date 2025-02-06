@@ -1,3 +1,4 @@
-Miami, AZ
-Tucson, AZ
-Gadsden, AZ
+18,Miami, AZ
+5,Tucson, AZ
+44,Gadsden, AZ
+27,Kingman, AZ
