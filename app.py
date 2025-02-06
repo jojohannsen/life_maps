@@ -66,7 +66,7 @@ def make_city_button(city):
     )
     return citybutton
 
-def select_user():
+def get_distinct_users():
     result = db.query("select distinct username from city_location")
     return Select(
         *[Option(row['username'], value=row['username']) for row in result],
@@ -108,7 +108,6 @@ def change_user(username: str):
 def change_city(city_id: int):
     city = city_locs.get(city_id)
     try:
-        apm = ""
         # Only geocode if lat/lon not already set
         if not city.lat or not city.lon:
             location = geolocator.geocode(city.name)
@@ -117,7 +116,6 @@ def change_city(city_id: int):
                 city.lon = location.longitude
                 city.zoomlevel = 10
                 city_locs.update(city)
-                apm += f"add_person_marker(map, {city.lat}, {city.lon}, {city.years});\n"
         
         # Set all cities as inactive and mark the selected one as active
         for c in city_locs():
@@ -127,7 +125,7 @@ def change_city(city_id: int):
         # Return both the map update and the updated button list
         return Div(
             Script(f"""
-                {apm}
+                {add_person_markers()}
                 map.flyTo({{
                     center: [{city.lon}, {city.lat}],
                     zoom: {city.zoomlevel},
@@ -151,6 +149,15 @@ def get_active_city() -> CityLocation | None:
         city_locs.update(active)
     return active
 
+def add_person_markers() -> str:
+    """Generate JavaScript code to add markers for all cities with coordinates"""
+    apm = ""
+    for city in city_locs():
+        if city.lat and city.lon:
+            print(f"Adding marker for {city.name} at {city.lat}, {city.lon}")
+            apm += f"add_person_location('{active_user}', map, {city.lat}, {city.lon}, {city.years});\n"
+    return apm
+
 @rt
 def index():
     # Create Mapbox container with initialization script
@@ -167,15 +174,11 @@ def index():
     lon = active_city.lon if active_city.lon else -75.1652
     initial_center = f"[{lon}, {lat}]"
     initial_zoom = active_city.zoomlevel if active_city.zoomlevel else 9
-    apm = ""
-    for city in city_locs():
-        if city.lat and city.lon:
-            print(f"Adding marker for {city.name} at {city.lat}, {city.lon}")
-            apm += f"add_person_marker(map, {city.lat}, {city.lon}, {city.years});\n"
+    
     map_script = Div(
         Script(f"""
             const map = initMap('{mapbox_token}', {initial_center}, {initial_zoom});
-            {apm}
+            {add_person_markers()}
         """)
     )
     
@@ -188,12 +191,12 @@ def index():
     
     # Create layout with sidebar and right content
     layout = Div(
-        Div(select_user(), city_buttons(), cls="p-2 h-screen overflow-y-auto"),
+        Div(get_distinct_users(), city_buttons(), cls="p-2 h-screen overflow-y-auto"),
         right_content,
         cls="flex h-screen overflow-hidden"
     )
     
-    return Title("Map Dashboard"), layout
+    return Title("Life Map"), layout
 
 # Start the server
 serve() 

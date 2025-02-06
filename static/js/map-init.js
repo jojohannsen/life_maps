@@ -24,12 +24,16 @@ function initMap(mapboxToken, initialCenter, initialZoom) {
     return map;
 }
 
-function add_person_marker(map, lat, lon, years) {
+function alpha_only(str) {
+    return str.replace(/[^a-zA-Z]/g, '');
+}
+
+function add_person_location(person, map, lat, lon, years) {
     console.log("Adding person marker", lat, lon, years)
     const el = document.createElement('div');
     const width = 14 + years * 2;
     const height = 14 + years * 2;
-    el.className = 'marker';
+    el.className = 'mkr_' + alpha_only(person);
     el.style.backgroundColor = '#ff000080';
     el.style.width = `${width}px`;
     el.style.height = `${height}px`;
