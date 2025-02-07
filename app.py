@@ -149,13 +149,18 @@ def get_active_city() -> CityLocation | None:
         city_locs.update(active)
     return active
 
+# get_lat_lon_key takes lat/lon and gives uniform format so we can use it as a key in a dictionary
+def get_lat_lon_key(lat: float, lon: float) -> str:
+    return f"{lat:.2f},{lon:.2f}"
+
 def add_person_markers() -> str:
     """Generate JavaScript code to add markers for all cities with coordinates"""
     apm = ""
     for city in city_locs():
         if city.lat and city.lon:
+            lat_lon_key = get_lat_lon_key(city.lat, city.lon)
             print(f"Adding marker for {city.name} at {city.lat}, {city.lon}")
-            apm += f"add_person_location('{active_user}', map, {city.lat}, {city.lon}, {city.years});\n"
+            apm += f"add_person_location('{active_user}', '{lat_lon_key}', map, {city.lat}, {city.lon}, {city.years});\n"
     return apm
 
 @rt
