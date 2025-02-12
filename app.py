@@ -107,19 +107,25 @@ def change_user(username: str):
 @rt('/change-city/{city_id}')
 def change_city(city_id: int):
     city = city_locs.get(city_id)
+    print(f"Changing city to {city.name}")
+    print(f"City: {city}")
     try:
         # Only geocode if lat/lon not already set
         if not city.lat or not city.lon:
+            print(f"Geocoding city {city.name}")
             location = geolocator.geocode(city.name)
             if location:
+                print(f"Location: {location}")
                 city.lat = location.latitude
                 city.lon = location.longitude
                 city.zoomlevel = 10
                 city_locs.update(city)
-        
+            else:
+                print(f"No location found for {city.name}")
         # Set all cities as inactive and mark the selected one as active
         for c in city_locs():
             c.active = (c.id == city_id)
+            print(f"Setting city {c.name} to active: {c.active}")
             city_locs.update(c)
         
         # Return both the map update and the updated button list
@@ -174,11 +180,15 @@ def index():
     
     # Get active city for initial map position
     active_city = get_active_city()
+    lat = 40.0
+    lon = -75.0
+    initial_zoom = 9
     print(f"Active city: {active_city}")
-    lat = active_city.lat if active_city.lat else 39.9526
-    lon = active_city.lon if active_city.lon else -75.1652
+    if active_city and active_city.lat and active_city.lon:
+        lat = active_city.lat
+        lon = active_city.lon
+        initial_zoom = active_city.zoomlevel
     initial_center = f"[{lon}, {lat}]"
-    initial_zoom = active_city.zoomlevel if active_city.zoomlevel else 9
     
     map_script = Div(
         Script(f"""

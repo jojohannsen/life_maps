@@ -4,3 +4,5 @@ echo "SHOULD CREATE"
 ./repop.sh
 echo "SHOULD FIND"
 ./repop.sh
+python mvlatlon.py
+datasette data/cities.db
