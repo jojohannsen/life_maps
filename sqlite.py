@@ -11,7 +11,6 @@ class CityLocation:
     lon:float 
     zoomlevel:int
     username:str
-    active:bool
     years:int
 
 city_locs = db.create(CityLocation)
@@ -59,7 +58,6 @@ if len(result) == 0:
         
         print(f"Creating user {active_username}")
         for offset, cl in enumerate(city_loc_generator(data, active_username)):
-            cl.active = offset == 0
             city_locs.insert(cl)
     except FileNotFoundError:
         print(f"No locations file found for user {active_username}")

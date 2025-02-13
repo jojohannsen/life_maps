@@ -38,74 +38,115 @@ let next_circle_color = 0;
 // map lat_lon_key to a dictionary of person to years
 const latlon_to_person_years_dict = {};
 
+function digit_only(str) {
+    return str.replace(/[^0-9]/g, '');
+}
+
+const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+            console.log('Style changed:', mutation.target.style.opacity);
+            console.trace(); // This will show the stack trace of what's changing it
+        }
+    });
+});
+
+
+function createMarkerElement(person, lat_lon_key, i, width, height, two_color_gradient_css) {
+    const el = document.createElement('div');
+    el.id = 'mkr_' + digit_only(lat_lon_key) + '_' + i;
+    el.className = 'mkr_' + alpha_only(person);
+    el.style.width = `${width}px`;
+    el.style.height = `${height}px`;
+    el.style.backgroundSize = '100%';
+    el.style.borderRadius = '50%';
+    if (two_color_gradient_css) {
+        el.style.background = two_color_gradient_css;
+        el.title = `${person}, ${i + 1} years shared`; 
+    } else {
+        // first circle is solid, the rest are transparent with border
+        el.style.background = i === 0 ? person_circle_colors[person] : 'transparent';   
+        el.style.border = i === 0 ? 'none' : `1px solid ${person_circle_colors[person]}`;
+        el.title = `${person}, year ${i + 1}`; 
+    }
+
+    return el;
+}
+
 function add_person_location(person, lat_lon_key, map, lat, lon, years) {
-    console.log("Adding person marker", lat, lon, years)
+    // get color for person, or assign a new one if they don't have one
+    if (!person_circle_colors[person]) {
+        person_circle_colors[person] = circle_colors[next_circle_color];
+        next_circle_color = (next_circle_color + 1) % circle_colors.length;
+    }
+    person_color = person_circle_colors[person];
+    console.log("Adding marker: ", person, person_color, lat_lon_key, years)
     const two_color_gradient_template = 'conic-gradient(COLOR_1 0deg 180deg, COLOR_2 180deg 360deg)';
     let two_color_gradient_css = '';
     let years_diff = 0;
     let max_years_in_common = 0;
+    let other_person = '';
 
     // if there is no one at this lat/lon, add them to the dictionary
     if (!latlon_to_person_years_dict[lat_lon_key]) {
+        console.log("No one at this location, adding person", person)
         latlon_to_person_years_dict[lat_lon_key] = {};
         latlon_to_person_years_dict[lat_lon_key][person] = years;
     } else {
+        console.log("People at this location: ", latlon_to_person_years_dict[lat_lon_key])
         // if there is someone at this lat/lon, markers depend on years difference
         const other_people = Object.keys(latlon_to_person_years_dict[lat_lon_key])
             .filter(p => p !== person);
         // for now, just use the first other person
         if (other_people.length > 0) {
-            const other_person = other_people[0];
+            other_person = other_people[0];
             const other_years = latlon_to_person_years_dict[lat_lon_key][other_person];
             two_color_gradient_css = two_color_gradient_template
-                .replace('COLOR_1', person_circle_colors[person])
-                .replace('COLOR_2', person_circle_colors[other_person]);
+                .replace('COLOR_1', person_circle_colors[person] + '80')
+                .replace('COLOR_2', person_circle_colors[other_person] + '80');
+            console.log("Two color CSS:", two_color_gradient_css)
             years_diff = Math.abs(years - other_years);
             max_years_in_common = Math.min(years, other_years);
-            if (years_diff > 0) {
-                least_years_person = (years_diff > other_years) ? other_person : person;
-                most_years_person = (years_diff > other_years) ? person : other_person;
-                // remove existing markers for the years in common
-                for (let i = 0; i < max_years_in_common; i++) {
-                    const common_years_markers = document.querySelectorAll('.mkr_' + alpha_only(least_years_person) + '_' + i);
-                    common_years_markers.forEach(m => m.remove());
+
+            // remove existing markers for the years in common
+            // so if there are two people, "johannes" and "farahnaz", and they have 3 years in common,
+            // we would remove .mkr_johannes_0, .mkr_farahnaz_0, .mkr_johannes_1, .mkr_farahnaz_1, .mkr_johannes_2, .mkr_farahnaz_2
+            function removeMarkers(person) {
+                try {
+                    const markerPrefix = 'mkr_' + digit_only(lat_lon_key) + '_';
+                    const regex = new RegExp(`^${markerPrefix}\\d+$`);
+                    const matchingMarkers = Array.from(document.querySelectorAll('[id]'))
+                        .filter(el => regex.test(el.id) && el.className.includes('mkr_' + alpha_only(person)))
+                        .filter(el => parseInt(el.id.split('_').pop()) < max_years_in_common);
+                    matchingMarkers.forEach(m => m.remove());
+                } catch (error) {
+                    //console.error(`No existing markers found for ${person}:`, error);
                 }
-            } else {
-                // remove the existing markers for the other person
-                const other_person_markers = document.querySelectorAll('.mkr_' + alpha_only(other_person));
-                other_person_markers.forEach(m => m.remove());
             }
+            removeMarkers(person);
+            removeMarkers(other_person);
         }
     }
 
-    // get color for person, or assign a new one if they don't have one
-    if (!person_circle_colors[person]) {
-        person_circle_colors[person] = circle_colors[next_circle_color];
-        next_circle_color = (next_circle_color + 1) % circle_colors.length;
-    }   
-
     // make concentric circles from 1 to years
-    for (let i = 0; i < years; i++) {
+    // however, if max_years_in_common is non-zero, instead of individual circles,
+    // make a single circle with a two color gradient
+    if (max_years_in_common > 0) {
+        const width = 2 + max_years_in_common * 6;
+        const height = 2 + max_years_in_common * 6;
+        console.log("Adding two color background, max_years_in_common: ", max_years_in_common, ", width: ", width, ", height: ", height)
+        const el = createMarkerElement(person + " & " + other_person, lat_lon_key, max_years_in_common, width, height, two_color_gradient_css);
+        // Add markers to the map.
+        new mapboxgl.Marker(el)
+            .setLngLat([lon, lat])
+            .addTo(map);
+        el.style.opacity = 0.5;
+    } 
+    for (let i = max_years_in_common; i < years; i++) {
         const width = 8 + i * 6;
         const height = 8 + i * 6;
-        const el = document.createElement('div');
-        el.id = 'mkr_' + alpha_only(person) + '_' + i;
-        el.className = 'mkr_' + alpha_only(person);
-        el.style.width = `${width}px`;
-        el.style.height = `${height}px`;
-        el.style.backgroundSize = '100%';
-        el.style.borderRadius = '50%';
-
-        // first circle is solid, no border, the rest are transparent with border
-        el.style.background = i === 0 ? person_circle_colors[person] : 'transparent';
-        if ((i < max_years_in_common) && two_color_gradient_css) {
-            el.style.background = two_color_gradient_css;
-        }
-        el.style.border = i === 0 ? 'none' : `1px solid ${person_circle_colors[person]}`;
-        el.addEventListener('click', () => {
-            window.alert(marker.properties.message);
-        });
-
+        const el = createMarkerElement(person, lat_lon_key, i, width, height, '');
+        console.log("Adding marker element colored circle, year ", i)
         // Add markers to the map.
         new mapboxgl.Marker(el)
             .setLngLat([lon, lat])
