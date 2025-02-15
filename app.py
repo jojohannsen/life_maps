@@ -197,8 +197,146 @@ def add_person_markers(sess) -> str:
         sess['users_with_markers'].append(selected_person)
     return apm
 
+
+def create_year_buttons(years, years_selected, base_css, selected_css, unselected_css):
+    print(type(years), years_selected)
+    buttons = []
+    for year in years:
+        if year in years_selected:
+            buttons.append(Button(str(year), 
+                                hx_get=f'/unselect/{year}', 
+                                hx_target='#years-container', 
+                                cls=f'year_button {base_css} {selected_css}'))
+        else:
+            buttons.append(Button(str(year), 
+                                hx_get=f'/select/{year}', 
+                                hx_target='#years-container', 
+                                cls=f'year_button {base_css} {unselected_css}'))
+    return buttons
+
+@rt('/select/{year}')
+def get(sess, year: int):
+    print(f'selecting {year}')
+    sess['years_selected'].append(year)
+    print(sess['years_selected'])
+    return Years(sess['years'], sess['years_selected'])
+
+@rt('/unselect/{year}')
+def get(sess, year: int):
+    print(f'unselecting {year}')
+    sess['years_selected'].remove(year)
+    print(sess['years_selected'])
+    return Years(sess['years'], sess['years_selected'])
+
+def YearsButtons(years, years_selected):
+    selected_css = 'text-gray-700 bg-green-200 hover:bg-yellow-300'
+    unselected_css = 'text-gray-500 bg-yellow-200 hover:bg-green-400'
+    base_css = 'italic text-xs h-full rounded-none pl-1 pr-1 py-0 border'
+    buttons = create_year_buttons(years, years_selected, base_css, selected_css, unselected_css)
+    
+    # Add initial scroll position if provided
+    script = """
+    document.getElementById('buttons-container').addEventListener('scroll', function() {
+        saveScrollPosition();
+    });
+    """
+    
+    return Div(
+        *buttons,
+        Script(script),
+        id='buttons-container',
+        cls='ml-8 mr-8 flex overflow-x-auto scroll-smooth no-scrollbar',
+        style="""
+            -ms-overflow-style: none; 
+            scrollbar-width: none; 
+            overflow-x: scroll;
+        """,
+        _after="""
+            ::-webkit-scrollbar {
+                display: none;
+                width: 0;
+                height: 0;
+            }
+        """
+    )
+
+def scroll_position():
+    return Script("""
+    // To save the scroll position
+const saveScrollPosition = () => {
+    const scrollPosition = document.getElementById('buttons-container').scrollLeft;
+    // Save to localStorage
+    localStorage.setItem('buttonsScrollPosition', scrollPosition);
+};
+
+// To restore the scroll position
+const restoreScrollPosition = () => {
+    const savedPosition = localStorage.getItem('buttonsScrollPosition');
+    if (savedPosition !== null) {
+        document.getElementById('buttons-container').scrollTo({
+            left: parseInt(savedPosition),
+            behavior: 'instant'
+        });
+    }
+};
+
+// Call when the document is ready
+document.addEventListener('DOMContentLoaded', () => {
+    restoreScrollPosition();
+});
+""")
+
+def Years(years, years_selected):
+    # Container with relative positioning for arrow placement
+    return Div(
+        # Left arrow button
+        Button(UkIcon('chevron-left'), 
+               cls='h-full py-0 p-0.5 absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white p-2 rounded-r shadow-md',
+               id='scroll-left'),
+        # Scrollable container for year buttons
+        YearsButtons(years, years_selected),
+        # Right arrow button
+        Button(UkIcon('chevron-right'), 
+               cls='h-full py-0 p-0.5 absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white p-2 rounded-l shadow-md',
+               id='scroll-right'),
+        # JavaScript for scroll behavior
+        Script("""
+            document.getElementById('scroll-left').addEventListener('click', () => {
+                document.getElementById('buttons-container').scrollBy({
+                    left: -200,
+                    behavior: 'smooth'
+                });
+                setTimeout(() => {
+                    saveScrollPosition();
+                }, 500);
+            });
+            
+            document.getElementById('scroll-right').addEventListener('click', () => {
+                document.getElementById('buttons-container').scrollBy({
+                    left: 200,
+                    behavior: 'smooth'
+                });
+                setTimeout(() => {
+                    saveScrollPosition();
+                }, 500);
+            });
+            // Add listeners to year buttons after HTMX swaps
+            document.body.addEventListener('htmx:afterSwap', function(evt) {
+                restoreScrollPosition();
+            });
+        """), 
+        cls='relative w-full no-scrollbar',
+        style="height: 20px",
+        id='years-container'
+    )
+
 @rt("/")
 def index(sess):
+    years = list(range(1950, 2026))
+    # if session does not have 'years_selected' set, set it to the first year in the list
+    if 'years_selected' not in sess:
+        sess['years'] = years
+        sess['years_selected'] = []
     # Create Mapbox container with initialization script
     map_container = Div(
         id="map",
@@ -209,7 +347,7 @@ def index(sess):
     sess['selected_person'] = 'no user selected'
     sess['users_with_markers'] = []
     city_locs.xtra(username='no user selected')
-    
+
     # Get active city for initial map position
     active_city = get_active_city(sess)
     lat = 40.0
@@ -228,9 +366,9 @@ def index(sess):
             {add_person_markers(sess)}
         """)
     )
-    
     # Create right content area with map and slider
     right_content = Div(
+        Years(sess['years'], sess['years_selected']),
         map_container,
         map_script,
         cls="flex-1 p-2 h-screen overflow-hidden"
@@ -238,7 +376,8 @@ def index(sess):
     
     # Create layout with sidebar and right content
     layout = Div(
-        Div(get_distinct_users(sess['selected_person']), city_buttons(active_city), cls="p-2 h-screen overflow-y-auto"),
+        Div(get_distinct_users(sess['selected_person']), 
+            city_buttons(active_city), cls="p-2 h-screen overflow-y-auto"),
         right_content,
         cls="flex h-screen overflow-hidden"
     )
