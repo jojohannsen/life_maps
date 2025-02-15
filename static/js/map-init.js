@@ -62,12 +62,14 @@ function createMarkerElement(person, lat_lon_key, i, width, height, two_color_gr
     el.style.borderRadius = '50%';
     if (two_color_gradient_css) {
         el.style.background = two_color_gradient_css;
-        el.title = `${person}, ${i + 1} years shared`; 
+        const ystr = i === 0 ? 'year' : 'years';
+        el.title = `${person}, ${i + 1} ${ystr} shared`; 
     } else {
         // first circle is solid, the rest are transparent with border
         el.style.background = i === 0 ? person_circle_colors[person] : 'transparent';   
         el.style.border = i === 0 ? 'none' : `1px solid ${person_circle_colors[person]}`;
-        el.title = `${person}, year ${i + 1}`; 
+        const ystr = i === 0 ? 'year' : 'years';
+        el.title = `${person}, ${i + 1} ${ystr}`; 
     }
 
     return el;
@@ -83,15 +85,12 @@ function add_person_location(person, lat_lon_key, map, lat, lon, years) {
     console.log("Adding marker: ", person, person_color, lat_lon_key, years)
     const two_color_gradient_template = 'conic-gradient(COLOR_1 0deg 180deg, COLOR_2 180deg 360deg)';
     let two_color_gradient_css = '';
-    let years_diff = 0;
     let max_years_in_common = 0;
     let other_person = '';
 
     // if there is no one at this lat/lon, add them to the dictionary
     if (!latlon_to_person_years_dict[lat_lon_key]) {
-        console.log("No one at this location, adding person", person)
         latlon_to_person_years_dict[lat_lon_key] = {};
-        latlon_to_person_years_dict[lat_lon_key][person] = years;
     } else {
         console.log("People at this location: ", latlon_to_person_years_dict[lat_lon_key])
         // if there is someone at this lat/lon, markers depend on years difference
@@ -105,7 +104,6 @@ function add_person_location(person, lat_lon_key, map, lat, lon, years) {
                 .replace('COLOR_1', person_circle_colors[person] + '80')
                 .replace('COLOR_2', person_circle_colors[other_person] + '80');
             console.log("Two color CSS:", two_color_gradient_css)
-            years_diff = Math.abs(years - other_years);
             max_years_in_common = Math.min(years, other_years);
 
             // remove existing markers for the years in common
@@ -127,7 +125,7 @@ function add_person_location(person, lat_lon_key, map, lat, lon, years) {
             removeMarkers(other_person);
         }
     }
-
+    latlon_to_person_years_dict[lat_lon_key][person] = years;
     // make concentric circles from 1 to years
     // however, if max_years_in_common is non-zero, instead of individual circles,
     // make a single circle with a two color gradient
