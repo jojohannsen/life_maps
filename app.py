@@ -229,8 +229,8 @@ def get(sess, year: int):
     return Years(sess['years'], sess['years_selected'])
 
 def YearsButtons(years, years_selected):
-    selected_css = 'text-gray-700 bg-green-200 hover:bg-yellow-300'
-    unselected_css = 'text-gray-500 bg-yellow-200 hover:bg-green-400'
+    selected_css = 'text-gray-700 bg-green-200 hover:bg-green-400'
+    unselected_css = 'text-gray-500 bg-yellow-200 hover:bg-yellow-400'
     base_css = 'italic text-xs h-full rounded-none pl-1 pr-1 py-0 border'
     buttons = create_year_buttons(years, years_selected, base_css, selected_css, unselected_css)
     
@@ -375,7 +375,7 @@ def index(sess):
     )
     
     # Create layout with sidebar and right content
-    layout = Div(
+    layout = Div(scroll_position(),
         Div(get_distinct_users(sess['selected_person']), 
             city_buttons(active_city), cls="p-2 h-screen overflow-y-auto"),
         right_content,
