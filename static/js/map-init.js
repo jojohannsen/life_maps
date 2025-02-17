@@ -28,8 +28,21 @@ function alpha_only(str) {
     return str.replace(/[^a-zA-Z]/g, '');
 }
 
+const scrollToButton = (id, alignment) => {
+    // run this in 1/2 second
+    setTimeout(() => {
+        const button = document.getElementById(id);
+        if (button) {
+            button.scrollIntoView({
+        behavior: 'smooth',
+                block: 'nearest',
+                inline: alignment
+            });
+        }
+    }, 500);
+};
 
-// non transparent colors
+// non transparent colors, duplicated in ui-components.py (MUST KEEP IN SYNC MANUALLY)
 const circle_colors = ['#ff0000', '#0000ff', '#ff00ff', '#00ffff', '#ffffff', '#000000'];
 // dictionary mapping person to non transparent color
 const person_circle_colors = {};

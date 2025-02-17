@@ -12,10 +12,11 @@ class CityLocation:
     zoomlevel:int
     username:str
     years:int
+    start_year:int
 
 city_locs = db.create(CityLocation)
 
-def city_loc_generator(data, username):
+def city_loc_generator(data, username, start_year=None):
     for s in data:
         years = 1
         if ',' in s:
@@ -26,7 +27,8 @@ def city_loc_generator(data, username):
             except ValueError:  
                 pass
         s = s.strip()
-        city_loc = CityLocation(name=s, zoomlevel=10, username=username, years=years)
+        city_loc = CityLocation(name=s, zoomlevel=10, username=username, years=years, start_year=start_year)
+        start_year = start_year + years if start_year is not None else None
         yield city_loc
 
 # Define the default username
@@ -56,8 +58,13 @@ if len(result) == 0:
         with open(f'people/{active_username}.txt', 'r') as f:
             data = [line.strip() for line in f if line.strip()]
         
+        if data[0].startswith("born:"):
+            start_year = int(data[0].split(':')[1])
+            data = data[1:]
+        else:
+            start_year = None
         print(f"Creating user {active_username}")
-        for offset, cl in enumerate(city_loc_generator(data, active_username)):
+        for offset, cl in enumerate(city_loc_generator(data, active_username, start_year)):
             city_locs.insert(cl)
     except FileNotFoundError:
         print(f"No locations file found for user {active_username}")
