@@ -53,15 +53,33 @@ def get_distinct_users(selected_person: str):
         cls=f'{CITY_NAV_WIDTH} mb-2'
     )
 
-circle_colors = ['#ff0000', '#0000ff', '#ff00ff', '#00ffff', '#ffffff', '#000000']
+# MUST KEEP IN SYNC MANUALLY WITH static/js/map-init.js
+circle_colors = ['#01bcfe', '#ff7d00', '#ff006d', '#adff02', '#8f00ff']
 
-def MarkedUsers(selected_users):
+def selected_users_marked(selected_users):
+    return [user['name'] for user in selected_users if user['is_shown_above_map']]
+
+def _years_str(years_selected):
+    if not years_selected: return ""
+    elif len(years_selected) == 1: return f"{str(years_selected[0])}"
+    else: return f"{years_selected[0]}-{years_selected[-1]}"
+
+def user_display(user, selected_person, selected_city, years_selected, color):
+    if user == selected_person:
+        return (Span(user + ", ", cls="p-0 text-xs italic font-semibold", style=color), 
+            Span(selected_city + ", ", cls="p-0 text-xs font-semibold"),
+            Span(_years_str(years_selected), style=color, cls="p-0 text-xs italic")) 
+    else: return Span(user, cls="p-0 text-xs italic font-semibold", style=color)
+
+def MarkedUsers(selected_users, selected_city, selected_person, years_selected):
     print(f"MarkedUsers: {selected_users}")
+    print(f"selected_city: {selected_city}")
+    print(f"selected_person: {selected_person}")
+    print(f"years_selected: {years_selected}")
     return Div(
-        *[Div(user, 
-              cls="p-0 text-xs italic font-semibold", 
-              style=f"color: {circle_colors[i % len(circle_colors)]}") 
-            for i, user in enumerate(selected_users)],
+        Grid(Div(*[Div(user_display(user, selected_person, selected_city, years_selected, f"color: {circle_colors[i % len(circle_colors)]}")) 
+            for i, user in enumerate(selected_users_marked(selected_users))], cls="text-xs"), 
+            cols=1, cls="gap-0"),
         hx_swap_oob="true",
         cls="relative w-full p-0",
         id="marked-users-container"

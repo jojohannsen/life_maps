@@ -43,7 +43,7 @@ const scrollToButton = (id, alignment) => {
 };
 
 // non transparent colors, duplicated in ui-components.py (MUST KEEP IN SYNC MANUALLY)
-const circle_colors = ['#ff0000', '#0000ff', '#ff00ff', '#00ffff', '#ffffff', '#000000'];
+const circle_colors = ['#01bcfe', '#ff7d00', '#ff006d', '#adff02', '#8f00ff'];
 // dictionary mapping person to non transparent color
 const person_circle_colors = {};
 // next non transparent color to assign
