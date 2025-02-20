@@ -31,7 +31,7 @@ def change_user(username: str, sess):
         sess['selected_users'].append(username)
     city_locs.xtra(username=username)
     
-    active_city = get_active_city(sess)
+    active_city = None #get_active_city(sess)
     
     if active_city:
         print(f"CHANGE_USER: Selected users: {sess['selected_users']}, active city: {active_city.name}")
@@ -92,8 +92,13 @@ def get(sess, year: int):
     sess['years_selected'].remove(year)
     return Years(sess['years'], sess['years_selected'])
 
+first_time = True
 @rt("/")
 def index(sess):
+    global first_time
+    if first_time and 'years_selected' in sess:
+        del sess['years_selected']  # or sess.pop('years_selected', None)
+    first_time = False
     years = list(range(1950, 2026))
     if 'years_selected' not in sess:
         sess['years'] = years
