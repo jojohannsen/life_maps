@@ -19,3 +19,33 @@ class CityLocation:
 city_locs = db.create(CityLocation, pk='id')
 initial_user = 'no user selected'  # default user
 city_locs.xtra(username=initial_user)  # Set initial filter 
+
+class DBPersonContextManager:
+    def __init__(self, temp_person, selected_person):
+        self.temp_person = temp_person
+        self.selected_person = selected_person
+
+    def __enter__(self):
+        city_locs.xtra(username=self.temp_person)
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        city_locs.xtra(username=self.selected_person)
+
+def _years_str(years_selected):
+    if not years_selected: return ""
+    elif len(years_selected) == 1: return f"{str(years_selected[0])}"
+    else: return f"{years_selected[0]}-{years_selected[-1]}"
+
+def person_years_in_city(person, selected_person, selected_city):
+    with DBPersonContextManager(person, selected_person):
+        result = city_locs()
+        if result:
+            city_entries = [city for city in result if city.name == selected_city]
+            if city_entries:
+                # sort by start_year
+                city_entries.sort(key=lambda x: x.start_year)
+                # get the years for the city
+                year_strs = [_years_str((city.start_year, city.start_year + city.years)) for city in city_entries]
+                return ", ".join(year_strs)
+    return 0

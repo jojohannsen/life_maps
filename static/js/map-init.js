@@ -42,7 +42,7 @@ const scrollToButton = (id, alignment) => {
     }, 500);
 };
 
-// non transparent colors, duplicated in ui-components.py (MUST KEEP IN SYNC MANUALLY)
+// non transparent colors, duplicated in ui_components.py (MUST KEEP IN SYNC MANUALLY)
 const circle_colors = ['#01bcfe', '#ff7d00', '#ff006d', '#adff02', '#8f00ff'];
 // dictionary mapping person to non transparent color
 const person_circle_colors = {};
@@ -138,6 +138,7 @@ function add_person_location(person, lat_lon_key, map, lat, lon, years) {
             removeMarkers(other_person);
         }
     }
+    console.log("Adding person to latlon_to_person_years_dict: ", person, lat_lon_key, years)
     latlon_to_person_years_dict[lat_lon_key][person] = years;
     // make concentric circles from 1 to years
     // however, if max_years_in_common is non-zero, instead of individual circles,

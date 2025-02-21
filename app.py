@@ -33,6 +33,7 @@ def PersonVisualState(name: str, is_shown_above_map: bool = False):
 @rt('/change-user')
 def change_user(username: str, sess):
     sess['selected_person'] = username
+    sess['selected_city'] = ''
     if username not in L(sess['people_shown_on_map']).attrgot('name'):
         sess['people_shown_on_map'].append(PersonVisualState(name=username))
     city_locs.xtra(username=username)
@@ -105,16 +106,19 @@ def MapHeader(sess):
 first_time = True
 @rt("/")
 def index(sess):
+    # always start from a known state
+    sess.clear()
+
     global first_time
     if first_time and 'years_selected' in sess:
         del sess['years_selected']  # or sess.pop('years_selected', None)
     first_time = False
     years = list(range(1900, 2026))
-    if 'years_selected' not in sess:
-        sess['years'] = years
-        sess['years_selected'] = []
-        sess['people_shown_on_map'] = []
-        sess['selected_city'] = ''
+
+    sess['years'] = years
+    sess['years_selected'] = []
+    sess['people_shown_on_map'] = []
+    sess['selected_city'] = ''
 
     map_container = Div(
         id="map",
