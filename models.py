@@ -1,4 +1,4 @@
-from fasthtml.common import database
+from fasthtml.common import database, Span, Div
 import pathlib
 
 # Database setup
@@ -37,7 +37,9 @@ def _years_str(years_selected):
     elif len(years_selected) == 1: return f"{str(years_selected[0])}"
     else: return f"{years_selected[0]}-{years_selected[-1]}"
 
-def person_years_in_city(person, selected_person, selected_city):
+def person_years_in_city(person, selected_person, first_selected_year, lighter_color, selected_city):
+    if not selected_city:
+        return ""
     with DBPersonContextManager(person, selected_person):
         result = city_locs()
         if result:
@@ -47,5 +49,16 @@ def person_years_in_city(person, selected_person, selected_city):
                 city_entries.sort(key=lambda x: x.start_year)
                 # get the years for the city
                 year_strs = [_years_str((city.start_year, city.start_year + city.years)) for city in city_entries]
-                return ", ".join(year_strs)
+                year_strs = [year_str.replace("-2026", "-present") + ", " for year_str in year_strs[:-1]] + [year_strs[-1]]
+                if person == selected_person:
+                    year_spans = []
+                    for year_range, city in zip(year_strs, city_entries):
+                        if city.start_year == first_selected_year:
+                            year_spans.append(Span(year_range, cls="p-0 text-xs", style=f"color: {lighter_color}"))
+                        else:
+                            year_spans.append(Span(year_range, cls="p-0 text-xs text-gray-300"))
+                    
+                    return Span(*year_spans, cls="p-0 text-xs")
+                else:
+                    return ", ".join(year_strs)
     return 0

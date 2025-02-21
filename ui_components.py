@@ -4,7 +4,7 @@ from models import city_locs, CityLocation
 from models import person_years_in_city, _years_str
 
 # UI Constants
-CITY_NAV_WIDTH = 'w-48'
+CITY_NAV_WIDTH = 'w-52'
 
 def city_buttons(selected_city: CityLocation | None = None):
     user_city_data = city_locs()
@@ -24,8 +24,16 @@ def city_buttons(selected_city: CityLocation | None = None):
 def make_city_button(city, selected_city: CityLocation | None = None, 
                     selected_person_start_year: int | None = None,
                     selected_person_total_years: int | None = None):
+    single_percent = 100 / selected_person_total_years
+    left_percent = round(single_percent * (city.start_year - selected_person_start_year))
+    middle_percent = round(single_percent * city.years)
+    right_percent = 100 - left_percent - middle_percent
     button = Button(
-        Div(DivLAligned(city.name), Div(cls="h-1 bg-blue-200 w-full"),
+        Div(DivLAligned(city.name), 
+            Div(Div(cls="h-1 bg-blue-200", style=f"width: {left_percent}%"),
+                Div(cls="h-1 bg-green-400", style=f"width: {middle_percent}%"),
+                Div(cls="h-1 bg-blue-200", style=f"width: {right_percent}%"),
+                cls="w-full flex"),
             cls="w-full"),
         hx_trigger='click',
         hx_get=f'/change-city/{city.id}',
@@ -62,7 +70,7 @@ def get_distinct_users(selected_person: str):
     options = [Option("Select person", value="")]
     # order people by start year
     people.sort(key=lambda x: people_start_years[x])
-    options.extend([Option(person + f", b. {people_start_years[person]}", cls="text-xs", value=person) for person in people])
+    options.extend([Option(person, cls="text-xs", value=person) for person in people])
     
     if not selected_person:
         options[0].selected = True
@@ -109,24 +117,25 @@ def lighten_color(hex_color, amount=0.3):
 def selected_users_marked(selected_users):
     return [user['name'] for user in selected_users if user['is_shown_above_map']]
 
-def user_display(person, selected_person, selected_city, years_selected, color):
+def user_display(person, selected_person, selected_city, first_selected_year, color):
     lighter_color = lighten_color(color, 0.2)
+    year_str_for_city = person_years_in_city(person, selected_person, first_selected_year, lighter_color, selected_city)
     if person == selected_person:
         return (Span(person + ", ", cls="p-0 text-xs italic font-semibold", style=f"color: {color}"), 
             Span(selected_city + ", ", cls="p-0 text-xs font-semibold"),
-            Span(_years_str(years_selected), style=f"color: {lighter_color}", cls="p-0 text-xs")) 
+            Span(year_str_for_city, cls="p-0 text-xs")) 
     else:
-        year_str_for_city = person_years_in_city(person, selected_person, selected_city)
         if year_str_for_city:
-            return (Span(person + ", ", cls="p-0 text-xs italic font-semibold", style=f"color: {color}"),
-                    Span(selected_city + ", ", cls="p-0 text-xs font-semibold text-gray-300"),
+            return (Span(person + ", ", cls="p-0 text-xs", style=f"color: {color}"),
+                    Span(selected_city + ", ", cls="p-0 text-xs text-gray-300"),
                     Span(year_str_for_city, cls="p-0 text-xs text-gray-300")) 
         else:
             return Span(person, cls="p-0 text-xs italic font-semibold", style=f"color: {color}")
 
 def MarkedUsers(selected_users, selected_city, selected_person, years_selected):
+    first_selected_year = years_selected[0] if years_selected else None
     return Div(
-        Grid(Div(*[Div(user_display(user, selected_person, selected_city, years_selected, f"{circle_colors[i % len(circle_colors)]}")) 
+        Grid(Div(*[Div(user_display(user, selected_person, selected_city, first_selected_year, f"{circle_colors[i % len(circle_colors)]}")) 
             for i, user in enumerate(selected_users_marked(selected_users))], cls="text-xs"), 
             cols=1, cls="gap-0"),
         hx_swap_oob="true",
