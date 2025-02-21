@@ -4,4 +4,4 @@ born: 1959
 7,Cambridge, MA
 1,Oakland, CA
 34,Los Angeles, CA
-5,Joshua Tree, CA
+*,Joshua Tree, CA

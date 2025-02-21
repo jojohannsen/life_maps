@@ -2,4 +2,4 @@ born: 1937
 18,Miami, AZ
 5,Tucson, AZ
 44,Gadsden, AZ
-27,Kingman, AZ
+*,Kingman, AZ

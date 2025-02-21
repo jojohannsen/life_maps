@@ -5,5 +5,5 @@ born: 1961
 1, Cambridge, MA
 3, Tehran, Iran
 2, Stoke-on-Trent, England
-37, Los Angeles, CA
-5, Joshua Tree, CA
+38, Los Angeles, CA
+*, Joshua Tree, CA

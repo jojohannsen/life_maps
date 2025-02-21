@@ -25,18 +25,17 @@ def city_loc_generator(data, username, start_year=None):
                 years = int(s.split(',',1)[0])
                 s = s.split(',',1)[1]
             except ValueError:  
-                pass
+                if s.startswith('*'):
+                    years = 2026 - start_year
+                    s = s[2:]
         s = s.strip()
         city_loc = CityLocation(name=s, zoomlevel=10, username=username, years=years, start_year=start_year)
         start_year = start_year + years if start_year is not None else None
         yield city_loc
 
-# Define the default username
-USERNAME = 'johannes'
-
 # Parse command line arguments
 parser = argparse.ArgumentParser(description='Process city locations for a user')
-parser.add_argument('--username', default=USERNAME, help='Username to create/view city locations for')
+parser.add_argument('--username', required=True, help='Username to create/view city locations for')
 args = parser.parse_args()
 
 # Use command line username if provided, otherwise use default
