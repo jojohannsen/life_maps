@@ -20,7 +20,6 @@ function initMap(mapboxToken, initialCenter, initialZoom) {
         maxWidth: 80,
         unit: 'metric'
     }));
-
     return map;
 }
 

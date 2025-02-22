@@ -51,7 +51,7 @@ def set_people_shown_on_map(sess):
             print(f"Setting {current_person} to shown above map")
 
 @rt('/change-city/{city_id}')
-def change_city(city_id: int, sess):
+def change_city(city_id: int, zoom: int, sess):
     set_people_shown_on_map(sess)
     city = city_locs.get(city_id)
     try:
@@ -60,7 +60,7 @@ def change_city(city_id: int, sess):
             if location:
                 city.lat = location.latitude
                 city.lon = location.longitude
-                city.zoomlevel = 10
+                city.zoomlevel = zoom
                 city_locs.update(city)
 
         sess['active_city_id'] = city_id
@@ -75,7 +75,7 @@ def change_city(city_id: int, sess):
                 {scroll_script}
                 map.flyTo({{
                     center: [{city.lon}, {city.lat}],
-                    zoom: {city.zoomlevel},
+                    zoom: {zoom},
                     essential: true
                 }});
             """, id="move-map"),
@@ -141,6 +141,9 @@ def index(sess):
     map_script = Div(
         Script(f"""
             const map = initMap('{mapbox_token}', [{lon}, {lat}], {initial_zoom});
+            function get_zoom() {{
+                return Math.round(map.getZoom());
+            }}
             {add_person_markers(sess)}
         """)
     )

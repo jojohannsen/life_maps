@@ -1,4 +1,5 @@
-from fasthtml.common import database, Span, Div
+from fasthtml.common import database, Span
+from datetime import datetime
 import pathlib
 
 # Database setup
@@ -32,10 +33,12 @@ class DBPersonContextManager:
     def __exit__(self, exc_type, exc_value, traceback):
         city_locs.xtra(username=self.selected_person)
 
-def _years_str(years_selected):
-    if not years_selected: return ""
-    elif len(years_selected) == 1: return f"{str(years_selected[0])}"
-    else: return f"{years_selected[0]}-{years_selected[-1]}"
+def _years_str(start_year, number_of_years):
+    # get current year
+    current_year = datetime.now().year
+    if number_of_years == 1: return str(start_year)
+    elif (start_year + number_of_years - 1) == current_year: return f"{start_year}-present"
+    else: return f"{start_year}-{start_year + number_of_years - 1}"
 
 def person_years_in_city(person, selected_person, first_selected_year, lighter_color, selected_city):
     if not selected_city:
@@ -48,8 +51,8 @@ def person_years_in_city(person, selected_person, first_selected_year, lighter_c
                 # sort by start_year
                 city_entries.sort(key=lambda x: x.start_year)
                 # get the years for the city
-                year_strs = [_years_str((city.start_year, city.start_year + city.years)) for city in city_entries]
-                year_strs = [year_str.replace("-2026", "-present") + ", " for year_str in year_strs[:-1]] + [year_strs[-1]]
+                year_strs = [_years_str(city.start_year, city.years) for city in city_entries]
+                year_strs = [year_str + ", " for year_str in year_strs[:-1]] + [year_strs[-1]]
                 if person == selected_person:
                     year_spans = []
                     for year_range, city in zip(year_strs, city_entries):

@@ -1,7 +1,7 @@
 from fasthtml.common import *
 from monsterui.all import *
 from models import city_locs, CityLocation
-from models import person_years_in_city, _years_str
+from models import person_years_in_city
 
 # UI Constants
 CITY_NAV_WIDTH = 'w-52'
@@ -36,6 +36,7 @@ def make_city_button(city, selected_city: CityLocation | None = None,
                 cls="w-full flex"),
             cls="w-full"),
         hx_trigger='click',
+        hx_vals="js:{zoom: get_zoom()}",
         hx_get=f'/change-city/{city.id}',
         hx_target='#city-buttons-container',
         cls=f'w-fulltext-left justify-start hover:bg-muted {CITY_NAV_WIDTH} ' + 
@@ -59,12 +60,9 @@ def get_distinct_users(selected_person: str):
     people_start_years = {}
     for person in people:
         result = db.query("select min(start_year) as start_year from city_location where username = ?", (person,))
-        print(f"result: {result}")
         if result:
             result = list(result)
-            print(f"result: {result}")
         start_years = [row['start_year'] for row in result]
-        print(f"start_years: {start_years}")
         people_start_years[person] = min(start_years)
 
     options = [Option("Select person", value="")]
@@ -121,9 +119,12 @@ def user_display(person, selected_person, selected_city, first_selected_year, co
     lighter_color = lighten_color(color, 0.2)
     year_str_for_city = person_years_in_city(person, selected_person, first_selected_year, lighter_color, selected_city)
     if person == selected_person:
-        return (Span(person + ", ", cls="p-0 text-xs italic font-semibold", style=f"color: {color}"), 
-            Span(selected_city + ", ", cls="p-0 text-xs font-semibold"),
-            Span(year_str_for_city, cls="p-0 text-xs")) 
+        if year_str_for_city:
+            return (Span(person + ", ", cls="p-0 text-xs italic font-semibold", style=f"color: {color}"), 
+                    Span(selected_city + ", ", cls="p-0 text-xs font-semibold"),
+                    Span(year_str_for_city, cls="p-0 text-xs")) 
+        else:
+            return Span(person + ", ", cls="p-0 text-xs italic font-semibold", style=f"color: {color}")
     else:
         if year_str_for_city:
             return (Span(person + ", ", cls="p-0 text-xs", style=f"color: {color}"),
