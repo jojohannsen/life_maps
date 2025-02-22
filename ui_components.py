@@ -1,22 +1,23 @@
 from fasthtml.common import *
 from monsterui.all import *
-from models import city_locs, CityLocation
+from models import cities_occupied_by_person, CityLocation
 from models import person_years_in_city
 
 # UI Constants
 CITY_NAV_WIDTH = 'w-52'
 
-def city_buttons(selected_city: CityLocation | None = None):
-    user_city_data = city_locs()
+def city_buttons(selected_person: str, selected_city: CityLocation | None = None):
+    print(f"city_buttons: {selected_person=}, {selected_city=}")
+    user_city_data = cities_occupied_by_person(selected_person)
     if user_city_data:
         selected_person_start_year = min(L(user_city_data).attrgot('start_year').map(int))
         selected_person_total_years = sum(L(user_city_data).attrgot('years').map(int))
-        city_buttons = [make_city_button(city, selected_city, selected_person_start_year, selected_person_total_years) for city in user_city_data]
+        buttons = [make_city_button(city, selected_city, selected_person_start_year, selected_person_total_years) for city in user_city_data]
     else:
-        city_buttons = []
+        buttons = []
 
     return Div(
-        *city_buttons,
+        *buttons,
         id='city-buttons-container',
         cls='space-y-2'
     )
@@ -28,6 +29,9 @@ def make_city_button(city, selected_city: CityLocation | None = None,
     left_percent = round(single_percent * (city.start_year - selected_person_start_year))
     middle_percent = round(single_percent * city.years)
     right_percent = 100 - left_percent - middle_percent
+    print(f"make_city_button: {city.name}, selected_city: {selected_city}")
+    button_style = 'bg-blue-500 text-white' if selected_city and city.id == selected_city.id else 'bg-blue-50'
+    print(f"button_style: {button_style}")
     button = Button(
         Div(DivLAligned(city.name), 
             Div(Div(cls="h-1 bg-blue-200", style=f"width: {left_percent}%"),
@@ -39,10 +43,7 @@ def make_city_button(city, selected_city: CityLocation | None = None,
         hx_vals="js:{zoom: get_zoom()}",
         hx_get=f'/change-city/{city.id}',
         hx_target='#city-buttons-container',
-        cls=f'w-fulltext-left justify-start hover:bg-muted {CITY_NAV_WIDTH} ' + 
-        ('bg-blue-500 text-white' 
-         if selected_city and city.id == selected_city.id else 'bg-blue-50'))
-    # Create year blocks if we have selected person data
+        cls=f'w-fulltext-left justify-start hover:bg-muted {CITY_NAV_WIDTH} {button_style}')
 
     return DivLAligned(
         Div(
@@ -80,9 +81,9 @@ def get_distinct_users(selected_person: str):
     
     return Select(
         *options,
-        name='username',
+        name='selected_person',
         hx_trigger='change',
-        hx_post='/change-user',
+        hx_post='/select-person',
         hx_target='#city-buttons-container',
         hx_swap='outerHTML',
         cls=f'{CITY_NAV_WIDTH} mb-2'
@@ -133,9 +134,11 @@ def user_display(person, selected_person, selected_city, first_selected_year, co
         else:
             return Span(person, cls="p-0 text-xs italic font-semibold", style=f"color: {color}")
 
-def MarkedUsers(selected_users, selected_city, selected_person, years_selected):
+def MarkedUsers(marker_update_script, selected_users, selected_city, selected_person, years_selected):
     first_selected_year = years_selected[0] if years_selected else None
+    print(f"MarkedUsers, {selected_person=}, {selected_city=}: {marker_update_script}")
     return Div(
+        Script(marker_update_script),
         Grid(Div(*[Div(user_display(user, selected_person, selected_city, first_selected_year, f"{circle_colors[i % len(circle_colors)]}")) 
             for i, user in enumerate(selected_users_marked(selected_users))], cls="text-xs"), 
             cols=1, cls="gap-0"),
@@ -145,7 +148,7 @@ def MarkedUsers(selected_users, selected_city, selected_person, years_selected):
     )
 
 # Years UI Components
-def create_year_buttons(years, years_selected, base_css, selected_css, unselected_css):
+def YearsButtons(years, years_selected, base_css, selected_css, unselected_css):
     buttons = []
     for year in years:
         if year in years_selected:
@@ -162,11 +165,11 @@ def create_year_buttons(years, years_selected, base_css, selected_css, unselecte
                                 id=f'y-{year}'))
     return buttons
 
-def YearsButtons(years, years_selected):
+def ScrollableYearsButtons(years, years_selected):
     selected_css = 'text-gray-700 bg-green-200 hover:bg-green-400'
     unselected_css = 'text-gray-500 bg-yellow-200 hover:bg-yellow-400'
     base_css = 'italic text-xs h-full rounded-none pl-1 pr-1 py-0 border'
-    buttons = create_year_buttons(years, years_selected, base_css, selected_css, unselected_css)
+    buttons = YearsButtons(years, years_selected, base_css, selected_css, unselected_css)
     
     script = """
     document.getElementById('buttons-container').addEventListener('scroll', function() {
@@ -198,7 +201,7 @@ def Years(years, years_selected):
         Button(UkIcon('chevron-left'), 
                cls='h-full py-0 p-0.5 absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white p-2 rounded-r shadow-md',
                id='scroll-left'),
-        YearsButtons(years, years_selected),
+        ScrollableYearsButtons(years, years_selected),
         Button(UkIcon('chevron-right'), 
                cls='h-full py-0 p-0.5 absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white p-2 rounded-l shadow-md',
                id='scroll-right'),

@@ -1,12 +1,15 @@
+import os
 from fasthtml.common import *
 from monsterui.all import *
-import os
 from geopy.exc import GeocoderTimedOut
-from models import db, DB_PATH, city_locs
+from models import (
+    DB_PATH, city_locs, cities_occupied_by_person
+)
 from ui_components import (
     city_buttons, get_distinct_users, Years, scroll_position, MarkedUsers
 )
 from map_utils import get_active_city, add_person_markers, geolocator
+from constants import SELECTED_CITY_NAME_KEY, ACTIVE_CITY_ID_KEY
 
 # Create FastHTML app with blue theme and add Mapbox CSS/JS
 mapbox_token = os.environ['MAPBOX_TOKEN']
@@ -30,17 +33,33 @@ def PersonVisualState(name: str, is_shown_above_map: bool = False):
         'is_shown_above_map': is_shown_above_map
     }
 
-@rt('/change-user')
-def change_user(username: str, sess):
-    sess['selected_person'] = username
-    sess['selected_city'] = ''
-    if username not in L(sess['people_shown_on_map']).attrgot('name'):
-        sess['people_shown_on_map'].append(PersonVisualState(name=username))
-    city_locs.xtra(username=username)
-    
+@rt('/select-person')
+def select_person(selected_person: str, sess):
+    print(f"select_person: {selected_person}, {sess[SELECTED_CITY_NAME_KEY]=}")
+    sess['selected_person'] = selected_person
+    if selected_person not in L(sess['people_shown_on_map']).attrgot('name'):
+        sess['people_shown_on_map'].append(PersonVisualState(name=selected_person))
+    cities = cities_occupied_by_person(selected_person)
+    print(f"cities: {len(cities)}")
+    city_names = [city.name for city in cities]
+    if sess[SELECTED_CITY_NAME_KEY] not in city_names:
+        sess[SELECTED_CITY_NAME_KEY] = ''
     active_city = None
-    return (city_buttons(active_city), 
-            MarkedUsers(sess['people_shown_on_map'], sess['selected_city'], sess['selected_person'], sess['years_selected']))
+    marker_script = ''
+    selected_city = sess[SELECTED_CITY_NAME_KEY]
+    print(f"selected_city: {selected_city}")
+    for city in cities:
+        if city.name == selected_city:
+            print(f"FOUND ACTIVE CITY: {city.name}")
+            active_city = city
+            sess[ACTIVE_CITY_ID_KEY] = city.id
+            marker_script = add_person_markers(sess)
+            break
+    if ACTIVE_CITY_ID_KEY in sess:
+        active_city = city_locs.get(sess[ACTIVE_CITY_ID_KEY])
+    return (city_buttons(selected_person, active_city), 
+            MapHeader(sess, marker_script))
+    #MarkedUsers(marker_script,sess['people_shown_on_map'], sess['selected_city'], sess['selected_person'], sess['years_selected']))
 
 def set_people_shown_on_map(sess):
     current_person = sess['selected_person']
@@ -63,8 +82,8 @@ def change_city(city_id: int, zoom: int, sess):
                 city.zoomlevel = zoom
                 city_locs.update(city)
 
-        sess['active_city_id'] = city_id
-        sess['selected_city'] = city.name
+        sess[ACTIVE_CITY_ID_KEY] = city_id
+        sess[SELECTED_CITY_NAME_KEY] = city.name
         sess['years_selected'] = []
         sess['years_selected'] = list(range(city.start_year, city.start_year + city.years))
         #scroll_script = f"scrollToButton('y-{city.start_year + city.years - 1}', 'center')\n"
@@ -79,7 +98,7 @@ def change_city(city_id: int, zoom: int, sess):
                     essential: true
                 }});
             """, id="move-map"),
-            city_buttons(city)
+            city_buttons(sess['selected_person'], city)
         ), MapHeader(sess))
     except GeocoderTimedOut:
         return "Geocoding timed out"
@@ -94,57 +113,52 @@ def get(sess, year: int):
     sess['years_selected'].remove(year)
     return Years(sess['years'], sess['years_selected'])
 
-def MapHeader(sess):
-    print(f"MapHeader: {sess['people_shown_on_map']}")
+def MapHeader(sess, marker_script: str = ''):
     return Div(
-        MarkedUsers(sess['people_shown_on_map'], sess['selected_city'], sess['selected_person'], sess['years_selected']),
+        MarkedUsers(marker_script, sess['people_shown_on_map'], sess[SELECTED_CITY_NAME_KEY], sess['selected_person'], sess['years_selected']),
         Years(sess['years'], sess['years_selected']),
         hx_swap_oob="true",
         id="map-header"
     )
 
-first_time = True
 @rt("/")
 def index(sess):
     # always start from a known state
     sess.clear()
 
-    global first_time
-    if first_time and 'years_selected' in sess:
-        del sess['years_selected']  # or sess.pop('years_selected', None)
-    first_time = False
     years = list(range(1900, 2026))
 
     sess['years'] = years
     sess['years_selected'] = []
     sess['people_shown_on_map'] = []
-    sess['selected_city'] = ''
+    sess[SELECTED_CITY_NAME_KEY] = ''
+    sess['selected_person'] = None
 
+    print(f"index: {sess[SELECTED_CITY_NAME_KEY]=}")
     map_container = Div(
         id="map",
         cls="w-full h-full rounded-lg",
         style="position: relative; height: calc(100vh - 2rem);"
     )
 
-    sess['selected_person'] = 'no user selected'
-    city_locs.xtra(username='no user selected')
-
-    active_city = get_active_city(sess)
+    active_city = None
     lat, lon = 40.0, -75.0
     initial_zoom = 9
     
-    if active_city and active_city.lat and active_city.lon:
-        lat = active_city.lat
-        lon = active_city.lon
-        initial_zoom = active_city.zoomlevel
-    
     map_script = Div(
         Script(f"""
-            const map = initMap('{mapbox_token}', [{lon}, {lat}], {initial_zoom});
-            function get_zoom() {{
-                return Math.round(map.getZoom());
-            }}
-            {add_person_markers(sess)}
+const map = initMap('{mapbox_token}', [{lon}, {lat}], {initial_zoom});
+
+function get_zoom() {{
+    return Math.round(map.getZoom());
+}}
+
+map.on('zoom', () => {{
+  const newZoom = map.getZoom();
+  console.log('Zoom changed to:', Math.round(newZoom));
+}});
+
+{add_person_markers(sess)}
         """)
     )
 
@@ -159,7 +173,7 @@ def index(sess):
         scroll_position(),
         Div(
             get_distinct_users(sess['selected_person']), 
-            city_buttons(active_city), 
+            city_buttons(sess['selected_person'], active_city), 
             cls="p-2 h-screen overflow-y-auto"
         ),
         right_content,

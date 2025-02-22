@@ -33,7 +33,7 @@ const scrollToButton = (id, alignment) => {
         const button = document.getElementById(id);
         if (button) {
             button.scrollIntoView({
-        behavior: 'smooth',
+                behavior: 'smooth',
                 block: 'nearest',
                 inline: alignment
             });
@@ -54,14 +54,6 @@ function digit_only(str) {
     return str.replace(/[^0-9]/g, '');
 }
 
-const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-        if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-            console.log('Style changed:', mutation.target.style.opacity);
-            console.trace(); // This will show the stack trace of what's changing it
-        }
-    });
-});
 
 
 function createMarkerElement(person, lat_lon_key, i, width, height, two_color_gradient_css) {
