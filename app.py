@@ -3,7 +3,7 @@ from fasthtml.common import *
 from monsterui.all import *
 from geopy.exc import GeocoderTimedOut
 from models import (
-    DB_PATH, city_locs, cities_occupied_by_person
+    DB_PATH, city_locs, cities_occupied_by_person, people_in_year
 )
 from ui_components import (
     city_buttons, get_distinct_users, Years, scroll_position, MarkedUsers
@@ -38,7 +38,7 @@ def select_person(selected_person: str, sess):
     print(f"select_person: {selected_person}, {sess[SELECTED_CITY_NAME_KEY]=}")
     sess['selected_person'] = selected_person
     if selected_person not in L(sess['people_shown_on_map']).attrgot('name'):
-        sess['people_shown_on_map'].append(PersonVisualState(name=selected_person))
+        sess['people_shown_on_map'].append(PersonVisualState(name=selected_person, is_shown_above_map=True))
     cities = cities_occupied_by_person(selected_person)
     print(f"cities: {len(cities)}")
     city_names = [city.name for city in cities]
@@ -48,19 +48,20 @@ def select_person(selected_person: str, sess):
     marker_script = ''
     selected_city = sess[SELECTED_CITY_NAME_KEY]
     print(f"selected_city: {selected_city}")
+    people_cities_for_year = None
     for city in cities:
         if city.name == selected_city:
             print(f"FOUND ACTIVE CITY: {city.name}")
             active_city = city
             sess[ACTIVE_CITY_ID_KEY] = city.id
             marker_script = add_person_markers(sess)
+            people_cities_for_year = people_in_year(city.start_year)
             break
     if ACTIVE_CITY_ID_KEY in sess:
         active_city = city_locs.get(sess[ACTIVE_CITY_ID_KEY])
     return (city_buttons(selected_person, active_city), 
-            MapHeader(sess, marker_script))
-    #MarkedUsers(marker_script,sess['people_shown_on_map'], sess['selected_city'], sess['selected_person'], sess['years_selected']))
-
+            MapHeader(sess, people_cities_for_year, marker_script))
+ 
 def set_people_shown_on_map(sess):
     current_person = sess['selected_person']
     if current_person:
@@ -99,23 +100,28 @@ def change_city(city_id: int, zoom: int, sess):
                 }});
             """, id="move-map"),
             city_buttons(sess['selected_person'], city)
-        ), MapHeader(sess))
+        ), MapHeader(sess, people_in_year(city.start_year)))
     except GeocoderTimedOut:
         return "Geocoding timed out"
 
 @rt('/select/{year}')
 def get(sess, year: int):
-    sess['years_selected'].append(year)
-    return Years(sess['years'], sess['years_selected'])
+    sess['years_selected'] = [year]
+    # find the where people were in this year
+    people_cities_for_year = people_in_year(year)
+    print(f"people_cities_for_year: {people_cities_for_year}")
+    print("CALLING MAP HEADER")
+    return MapHeader(sess, people_cities_for_year)
 
 @rt('/unselect/{year}')
 def get(sess, year: int):
-    sess['years_selected'].remove(year)
+    sess['years_selected'] = []
     return Years(sess['years'], sess['years_selected'])
 
-def MapHeader(sess, marker_script: str = ''):
+def MapHeader(sess, people_cities_for_year = None, marker_script = ''):
     return Div(
-        MarkedUsers(marker_script, sess['people_shown_on_map'], sess[SELECTED_CITY_NAME_KEY], sess['selected_person'], sess['years_selected']),
+        MarkedUsers(people_cities_for_year, marker_script, 
+                    sess['people_shown_on_map'], sess[SELECTED_CITY_NAME_KEY], sess['selected_person'], sess['years_selected']),
         Years(sess['years'], sess['years_selected']),
         hx_swap_oob="true",
         id="map-header"

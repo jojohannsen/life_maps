@@ -86,7 +86,7 @@ function add_person_location(person, lat_lon_key, map, lat, lon, years) {
         next_circle_color = (next_circle_color + 1) % circle_colors.length;
     }
     person_color = person_circle_colors[person];
-    console.log("Adding marker: ", person, person_color, lat_lon_key, years)
+
     const two_color_gradient_template = 'conic-gradient(COLOR_1 0deg 180deg, COLOR_2 180deg 360deg)';
     let two_color_gradient_css = '';
     let max_years_in_common = 0;

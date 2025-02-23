@@ -29,9 +29,8 @@ def make_city_button(city, selected_city: CityLocation | None = None,
     left_percent = round(single_percent * (city.start_year - selected_person_start_year))
     middle_percent = round(single_percent * city.years)
     right_percent = 100 - left_percent - middle_percent
-    print(f"make_city_button: {city.name}, selected_city: {selected_city}")
     button_style = 'bg-blue-500 text-white' if selected_city and city.id == selected_city.id else 'bg-blue-50'
-    print(f"button_style: {button_style}")
+
     button = Button(
         Div(DivLAligned(city.name), 
             Div(Div(cls="h-1 bg-blue-200", style=f"width: {left_percent}%"),
@@ -116,7 +115,8 @@ def lighten_color(hex_color, amount=0.3):
 def selected_users_marked(selected_users):
     return [user['name'] for user in selected_users if user['is_shown_above_map']]
 
-def user_display(person, selected_person, selected_city, first_selected_year, color):
+def person_header_display(person, people_cities_for_year, selected_person, selected_city, first_selected_year, color):
+    print(f"PERSON HEADER DISPLAY: {person}, {selected_person}, {selected_city}, {people_cities_for_year=}")
     lighter_color = lighten_color(color, 0.2)
     year_str_for_city = person_years_in_city(person, selected_person, first_selected_year, lighter_color, selected_city)
     if person == selected_person:
@@ -127,19 +127,31 @@ def user_display(person, selected_person, selected_city, first_selected_year, co
         else:
             return Span(person + ", ", cls="p-0 text-xs italic font-semibold", style=f"color: {color}")
     else:
+        print(f"NOT SELECTED PERSON, {year_str_for_city=}")
         if year_str_for_city:
             return (Span(person + ", ", cls="p-0 text-xs", style=f"color: {color}"),
                     Span(selected_city + ", ", cls="p-0 text-xs text-gray-300"),
                     Span(year_str_for_city, cls="p-0 text-xs text-gray-300")) 
         else:
+            if people_cities_for_year:
+                for city in people_cities_for_year:
+                    print(f"CHECKING CITY: {city} for {person}")
+                    if city.username == person:
+                        person_city_span = Span(city.name + ", ", cls="p-0 text-xs text-gray-300")
+                        year_str_for_city = person_years_in_city(person, selected_person, first_selected_year, lighter_color, city.name)
+                        return (Span(person + ", ", cls="p-0 text-xs italic font-semibold", style=f"color: {color}"), 
+                            person_city_span,
+                            Span(year_str_for_city, cls="p-0 text-xs text-gray-300"))
+
             return Span(person, cls="p-0 text-xs italic font-semibold", style=f"color: {color}")
 
-def MarkedUsers(marker_update_script, selected_users, selected_city, selected_person, years_selected):
+def MarkedUsers(people_cities_for_year, marker_update_script, selected_users, selected_city, selected_person, years_selected):
     first_selected_year = years_selected[0] if years_selected else None
     print(f"MarkedUsers, {selected_person=}, {selected_city=}: {marker_update_script}")
+    
     return Div(
         Script(marker_update_script),
-        Grid(Div(*[Div(user_display(user, selected_person, selected_city, first_selected_year, f"{circle_colors[i % len(circle_colors)]}")) 
+        Grid(Div(*[Div(person_header_display(user, people_cities_for_year, selected_person, selected_city, first_selected_year, f"{circle_colors[i % len(circle_colors)]}")) 
             for i, user in enumerate(selected_users_marked(selected_users))], cls="text-xs"), 
             cols=1, cls="gap-0"),
         hx_swap_oob="true",

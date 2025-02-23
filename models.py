@@ -58,3 +58,7 @@ def cities_occupied_by_person(username):
     # order by start_year
     result.sort(key=lambda x: x.start_year)
     return result
+
+def people_in_year(year):
+    result = [city for city in city_locs() if year in range(city.start_year, city.start_year + city.years)]
+    return result
