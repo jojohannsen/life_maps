@@ -13,30 +13,20 @@ def IconCard(icon_name):
         cls=(CardT.hover, "cursor-pointer")  # Use CardT.hover for proper hover effect
     )
 
-def make_card(name, birth_year):
-    # return Card(
-    #     Div(
-    #         Div(name, cls="font-serif bold text-sm"),
-    #         DivLAligned(
-    #             P(f"{birth_year}", cls="font-sans italic text-xs text-gray-400 inline-block"),
-    #             Div(cls="w-44 h-2 bg-cyan-500 inline-block ml-4"),
-    #         ),
-    #         cls="p-2"
-    #     ),
-    #     cls=(CardT.hover, "max-w-sm", "m-4")  # Add hover effect and max width
-    # )
+def make_card(name, birth_year, bright_color, subdued_color):
     return Div(
-            Div(name, cls="font-serif bold text-sm"),
+            Div(name, cls="mt-1 ml-2 font-serif bold text-sm"),
             DivLAligned(
-                P(f"{birth_year}", cls="font-sans italic text-xs text-gray-400 inline-block"),
-                Div(cls="w-44 h-2 bg-cyan-500 inline-block ml-4"),
+                P(f"{birth_year}", cls="font-sans ml-2 italic text-xs text-gray-400 inline-block"),
+                Div(cls=f"w-44 h-2 {subdued_color} group-hover:{bright_color} hover:{bright_color} inline-block ml-2"),
+                cls="mb-1 ml-1"
             ),
-            cls=(CardT.hover, "max-w-sm", "m-4")  # 
+            cls=(CardT.hover, "max-w-sm", "m-4", "w-60", "group")  # Added 'group' class
         )
 
 @rt("/artistic-card")
 def artistic_card():
-    return make_card("Diana", 1937)
+    return make_card("Diana", 1937, bright_color="bg-cyan-500", subdued_color="bg-cyan-200")
 
 @rt("/")
 def get():
