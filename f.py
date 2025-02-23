@@ -15,14 +15,19 @@ def IconCard(icon_name):
 
 def make_colors(color):
     return f"bg-{color}-500", f"bg-{color}-200"
+
 def make_card(name, birth_year, color):
     bright_color, subdued_color = make_colors(color)
     return Div(
             Div(name, cls="mt-1 ml-2 font-serif bold text-sm"),
             DivLAligned(
                 P(f"{birth_year}", cls="font-sans ml-2 italic text-xs text-gray-400 inline-block"),
-                Div(cls=f"w-44 h-2 {subdued_color} group-hover:{bright_color} hover:{bright_color} inline-block ml-2"),
-                cls="mb-1 ml-1"
+                Div(
+                    Div(cls=f"mt-0 w-20 h-2 {subdued_color} group-hover:{bright_color} hover:{bright_color} inline-block ml-2"),
+                    Div(cls=f"mt-2 w-20 h-2 {bright_color} group-hover:{bright_color} hover:{bright_color} inline-block"),
+                    cls="flex flex-row justify-between h-4"
+                ),
+                cls="mb-1 ml-1",
             ),
             cls=(CardT.hover, "max-w-sm", "m-4", "w-60", "group")  # Added 'group' class
         )
