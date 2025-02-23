@@ -13,25 +13,30 @@ def IconCard(icon_name):
         cls=(CardT.hover, "cursor-pointer")  # Use CardT.hover for proper hover effect
     )
 
+def make_card(name, birth_year):
+    # return Card(
+    #     Div(
+    #         Div(name, cls="font-serif bold text-sm"),
+    #         DivLAligned(
+    #             P(f"{birth_year}", cls="font-sans italic text-xs text-gray-400 inline-block"),
+    #             Div(cls="w-44 h-2 bg-cyan-500 inline-block ml-4"),
+    #         ),
+    #         cls="p-2"
+    #     ),
+    #     cls=(CardT.hover, "max-w-sm", "m-4")  # Add hover effect and max width
+    # )
+    return Div(
+            Div(name, cls="font-serif bold text-sm"),
+            DivLAligned(
+                P(f"{birth_year}", cls="font-sans italic text-xs text-gray-400 inline-block"),
+                Div(cls="w-44 h-2 bg-cyan-500 inline-block ml-4"),
+            ),
+            cls=(CardT.hover, "max-w-sm", "m-4")  # 
+        )
+
 @rt("/artistic-card")
 def artistic_card():
-    return Card(
-        CardHeader(
-            Div("Diana", cls="font-serif italic bold text-sm"),
-            cls="p-2"
-        ),
-        CardBody(
-            DivCentered(
-                Div(
-                    P("b. 1937", cls="font-sans text-sm text-gray-600 inline-block"),
-                    Div(cls="w-48 h-2 bg-cyan-500 inline-block ml-4"),
-                    cls="flex items-center"
-                ),
-            ),
-            cls="p-2"
-        ),
-        cls=(CardT.hover, "max-w-sm", "m-4")  # Add hover effect and max width
-    )
+    return make_card("Diana", 1937)
 
 @rt("/")
 def get():
