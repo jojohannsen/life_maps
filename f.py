@@ -13,7 +13,10 @@ def IconCard(icon_name):
         cls=(CardT.hover, "cursor-pointer")  # Use CardT.hover for proper hover effect
     )
 
-def make_card(name, birth_year, bright_color, subdued_color):
+def make_colors(color):
+    return f"bg-{color}-500", f"bg-{color}-200"
+def make_card(name, birth_year, color):
+    bright_color, subdued_color = make_colors(color)
     return Div(
             Div(name, cls="mt-1 ml-2 font-serif bold text-sm"),
             DivLAligned(
@@ -26,7 +29,14 @@ def make_card(name, birth_year, bright_color, subdued_color):
 
 @rt("/artistic-card")
 def artistic_card():
-    return make_card("Diana", 1937, bright_color="bg-cyan-500", subdued_color="bg-cyan-200")
+    return Div(
+        make_card("Diana", 1937, "yellow"),
+        make_card("Johannes", 1959, "orange"),
+        make_card("Farahnaz", 1961, "rose"),
+        make_card("Hannes", 1933, "slate"),
+        make_card("Abbas", 1940, "lime"),
+        make_card("Akhtar", 1944, "blue"),
+    )
 
 @rt("/")
 def get():
