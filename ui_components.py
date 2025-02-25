@@ -2,6 +2,7 @@ from fasthtml.common import *
 from monsterui.all import *
 from models import cities_occupied_by_person, CityLocation, people_colors
 from models import person_years_in_city
+from ui_cards import make_card
 
 # UI Constants
 CITY_NAV_WIDTH = 'w-52'
@@ -58,35 +59,44 @@ def get_distinct_users(selected_person: str):
     result = db.query("select distinct username from city_location")
     people = [row['username'] for row in result]
     people_start_years = {}
+    
+    # Get birth years and cities for each person
+    people_data = {}
     for person in people:
+        # Get birth year (minimum start year)
         result = db.query("select min(start_year) as start_year from city_location where username = ?", (person,))
         if result:
             result = list(result)
         start_years = [row['start_year'] for row in result]
-        people_start_years[person] = min(start_years)
-
-    options = [Option("Select person", value="")]
-    # order people by start year
+        birth_year = min(start_years)
+        people_start_years[person] = birth_year
+        
+        # Get cities occupied by this person
+        cities = cities_occupied_by_person(person)
+        people_data[person] = {
+            'birth_year': birth_year,
+            'cities': cities
+        }
+    
+    # Order people by birth year
     people.sort(key=lambda x: people_start_years[x])
-    options.extend([Option(person, cls="text-xs", value=person) for person in people])
     
-    if not selected_person:
-        options[0].selected = True
-    else:
-        for opt in options[1:]:
-            if opt.value == selected_person:
-                opt.selected = True
-                break
+    # Create cards for each person
+    cards = []
+    for person in people:
+        # Get color from people_colors
+        color = people_colors.get(person, "blue")  # Default to blue if no color defined
+        
+        # Create card
+        card = make_card(
+            name=person,
+            birth_year=people_data[person]['birth_year'],
+            color=color,
+            cities_occupied_by_person=people_data[person]['cities']
+        )
+        cards.append(card)
     
-    return Select(
-        *options,
-        name='selected_person',
-        hx_trigger='change',
-        hx_post='/select-person',
-        hx_target='#city-buttons-container',
-        hx_swap='outerHTML',
-        cls=f'{CITY_NAV_WIDTH} mb-2'
-    )
+    return Div(*cards, cls='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2')
 
 def selected_users_marked(selected_users):
     return [user['name'] for user in selected_users if user['is_shown_above_map']]
