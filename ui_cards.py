@@ -26,7 +26,7 @@ def make_single_bar_div(city_location, pixel_width, color, index):
     return Div(
         cls=f"h-2 group-hover:{bright_color} hover:{bright_color} {subdued_color} {'ml-2' if (index == 0) else ''} {'mt-0' if (index%2) == 0 else 'mt-2'} inline-block", 
         style=f"width: {pixel_width}px", 
-        uk_tooltip=f"{_years_str(city_location.start_year, city_location.years)}<br>{city_location.name}"
+        uk_tooltip=f"title:{_years_str(city_location.start_year, city_location.years)}<br>{city_location.name}; cls: {subdued_color} text-gray-800 uk-active;"
     )
 
 def make_bar_divs(cities_occupied_by_person, pixel_widths, color):
