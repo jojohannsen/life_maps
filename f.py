@@ -1,4 +1,5 @@
 from random import randint
+import random
 from fasthtml.common import *
 from monsterui.all import *
 from models import _years_str
@@ -20,21 +21,6 @@ def IconCard(icon_name):
 def make_colors(color):
     return f"bg-{color}-500", f"bg-{color}-200"
 
-def make_card(name, birth_year, color):
-    bright_color, subdued_color = make_colors(color)
-    return Div(
-            Div(name, cls="mt-1 ml-2 font-serif bold text-sm"),
-            DivLAligned(
-                P(f"{birth_year}", cls="font-sans ml-2 italic text-xs text-gray-400 inline-block"),
-                Div(
-                    Div(cls=f"mt-0 w-20 h-2 {subdued_color} group-hover:{bright_color} hover:{bright_color} inline-block ml-2"),
-                    Div(cls=f"mt-2 w-20 h-2 {subdued_color} group-hover:{bright_color} hover:{bright_color} inline-block"),
-                    cls="flex flex-row justify-between h-4"
-                ),
-                cls="mb-1 ml-1",
-            ),
-            cls=(CardT.hover, "max-w-sm", "m-4", "w-60", "group")  # Added 'group' class
-        )
 
 def make_bar_divs(cities_occupied_by_person, pixel_widths, bright_color, subdued_color):
     return Div(
@@ -43,7 +29,7 @@ def make_bar_divs(cities_occupied_by_person, pixel_widths, bright_color, subdued
         cls="flex flex-row justify-between h-4"
     )
 
-def make_card2(name, birth_year, color, cities_occupied_by_person):
+def make_card(name, birth_year, color, cities_occupied_by_person):
     bright_color, subdued_color = make_colors(color)
     # get proportion of years to total years
     total_years = sum(city.years for city in cities_occupied_by_person)
@@ -65,70 +51,18 @@ def make_card2(name, birth_year, color, cities_occupied_by_person):
             cls=(CardT.hover, "max-w-sm", "m-4", "w-60", "group")  # Added 'group' class
         )
 
-# First, add the CSS styles
-tooltip_style = Style("""
-    .tooltip-container {
-        position: relative;
-        display: inline-block;
-    }
-    
-    .tooltip-container .tooltip {
-        visibility: hidden;
-        position: absolute;
-        z-index: 1;
-        bottom: 125%;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 8px;
-        background-color: rgba(0, 0, 0, 0.8);
-        color: white;
-        border-radius: 4px;
-        font-size: 14px;
-        white-space: nowrap;
-        opacity: 0;
-        transition: opacity 0.3s;
-    }
-    
-    .tooltip-container:hover .tooltip {
-        visibility: visible;
-        opacity: 1;
-    }
-    
-    /* Add arrow */
-    .tooltip-container .tooltip::after {
-        content: "";
-        position: absolute;
-        top: 100%;
-        left: 50%;
-        margin-left: -5px;
-        border-width: 5px;
-        border-style: solid;
-        border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
-    }
-""")
-
-def make_tooltip_div(tooltip_text):
-    return Div(
-        Div(
-            Div(cls="tooltip", _t=tooltip_text),
-            cls="h-2 group-hover:bg-lime-500 hover:bg-lime-500 bg-lime-200 ml-2 mt-0 inline-block",
-            style="width: 57px"
-        ),
-        cls="tooltip-container"
-    )
 
 @rt("/acard")
 def artistic_card():
     return Div(
-        make_card2("Diana", 1937, "yellow", cities_occupied_by_person("Diana")),
-        make_card2("Johannes", 1959, "orange", cities_occupied_by_person("Johannes")),
-        make_card2("Farahnaz", 1961, "rose", cities_occupied_by_person("Farahnaz")),
-        make_card2("Hannes", 1933, "slate", cities_occupied_by_person("Hannes")),
-        make_card2("Abbas", 1940, "lime", cities_occupied_by_person("Abbas")),
-        make_card2("Akhtar", 1944, "blue", cities_occupied_by_person("Akhtar")),
+        make_card("Diana", 1937, "yellow", cities_occupied_by_person("Diana")),
+        make_card("Johannes", 1959, "orange", cities_occupied_by_person("Johannes")),
+        make_card("Farahnaz", 1961, "rose", cities_occupied_by_person("Farahnaz")),
+        make_card("Hannes", 1933, "slate", cities_occupied_by_person("Hannes")),
+        make_card("Abbas", 1940, "lime", cities_occupied_by_person("Abbas")),
+        make_card("Akhtar", 1944, "blue", cities_occupied_by_person("Akhtar")),
     )
 
-import random
 
 def random_subset(cities, min_count, max_count):
     return random.sample(cities, randint(min_count, max_count))
@@ -156,16 +90,6 @@ def cities_occupied_by_person(person_name):
         cities.append(city_loc)
     return cities
    
-@rt("/artistic-card")
-def artistic_card():
-    return Div(
-        make_card("Diana", 1937, "yellow"),
-        make_card("Johannes", 1959, "orange"),
-        make_card("Farahnaz", 1961, "rose"),
-        make_card("Hannes", 1933, "slate"),
-        make_card("Abbas", 1940, "lime"),
-        make_card("Akhtar", 1944, "blue"),
-    )
 
 @rt("/")
 def get():
