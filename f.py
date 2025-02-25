@@ -23,6 +23,27 @@ def make_colors(color):
 
 
 def make_single_bar_div(city_location, pixel_width, bright_color, subdued_color, index):
+    """
+    Creates a single bar div representing a city in a person's timeline.
+    
+    Parameters:
+    -----------
+    city_location : CityLocation
+        The city object containing name, start_year, and years data
+    pixel_width : int
+        The width of the bar in pixels, proportional to years spent in the city
+    bright_color : str
+        The CSS class for the bright color used on hover
+    subdued_color : str
+        The CSS class for the subdued color used by default
+    index : int
+        The position of this bar in the sequence, used for styling
+        
+    Returns:
+    --------
+    Div
+        A styled div element representing the city with tooltip information
+    """
     return Div(
         title=f"{city_location.name} {_years_str(city_location.start_year, city_location.years)}", 
         cls=f"h-2 group-hover:{bright_color} hover:{bright_color} {subdued_color} {'ml-2' if (index == 0) else ''} {'mt-0' if (index%2) == 0 else 'mt-2'} inline-block", 
