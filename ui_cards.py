@@ -2,7 +2,7 @@ from fasthtml.common import *
 from monsterui.all import *
 from models import _years_str, CityLocation
 
-def make_single_bar_div(city_location, pixel_width, bright_color, subdued_color, index):
+def make_single_bar_div(city_location, pixel_width, color, index):
     """
     Creates a single bar div representing a city in a person's timeline.
     
@@ -12,10 +12,8 @@ def make_single_bar_div(city_location, pixel_width, bright_color, subdued_color,
         The city object containing name, start_year, and years data
     pixel_width : int
         The width of the bar in pixels, proportional to years spent in the city
-    bright_color : str
-        The CSS class for the bright color used on hover
-    subdued_color : str
-        The CSS class for the subdued color used by default
+    color : str
+        The CSS class for the color used by default
     index : int
         The position of this bar in the sequence, used for styling
         
@@ -24,6 +22,7 @@ def make_single_bar_div(city_location, pixel_width, bright_color, subdued_color,
     Div
         A styled div element representing the city with tooltip information
     """
+    bright_color, subdued_color = f"bg-{color}-500", f"bg-{color}-200" 
     return Div(
         cls=f"h-2 group-hover:{bright_color} hover:{bright_color} {subdued_color} {'ml-2' if (index == 0) else ''} {'mt-0' if (index%2) == 0 else 'mt-2'} inline-block", 
         style=f"width: {pixel_width}px", 
@@ -31,9 +30,8 @@ def make_single_bar_div(city_location, pixel_width, bright_color, subdued_color,
     )
 
 def make_bar_divs(cities_occupied_by_person, pixel_widths, color):
-    bright_color, subdued_color = f"bg-{color}-500", f"bg-{color}-200"
     return Div(
-        *[make_single_bar_div(city, width, bright_color, subdued_color, i) 
+        *[make_single_bar_div(city, width, color, i) 
           for i, (width, city) in enumerate(zip(pixel_widths, cities_occupied_by_person))],
         cls="flex flex-row justify-between h-4"
     )
