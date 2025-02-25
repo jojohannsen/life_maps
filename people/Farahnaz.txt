@@ -1,4 +1,5 @@
 born: 1961
+color: fuchsia
 7, Tehran, Iran
 3, Bandar Abbas, Iran
 5, Tehran, Iran

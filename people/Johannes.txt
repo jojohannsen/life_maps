@@ -1,4 +1,5 @@
 born: 1959
+color: emerald
 1,Tucson, AZ
 17,Gadsden, AZ
 7,Cambridge, MA

@@ -16,8 +16,12 @@ class CityLocation:
     zoomlevel:int
     years:int
     start_year:int
+    color:str
 
 city_locs = db.create(CityLocation, pk='id')
+people_colors = {}
+for city in city_locs():
+    people_colors[city.username] = city.color
 
 def _years_str(start_year, number_of_years):
     # get current year
@@ -42,7 +46,7 @@ def person_years_in_city(person, selected_person, first_selected_year, lighter_c
                 year_spans = []
                 for year_range, city in zip(year_strs, city_entries):
                     if city.start_year == first_selected_year:
-                        year_spans.append(Span(year_range, cls="p-0 text-xs", style=f"color: {lighter_color}"))
+                        year_spans.append(Span(year_range, cls="p-0 text-xs {lighter_color}"))
                     else:
                         year_spans.append(Span(year_range, cls="p-0 text-xs text-gray-300"))
                     
@@ -52,9 +56,9 @@ def person_years_in_city(person, selected_person, first_selected_year, lighter_c
     return 0
 
 # Add a helper function for filtered queries
-def cities_occupied_by_person(username):
-    print(f"cities_occupied_by_person: {username}")
-    result = [city for city in city_locs() if city.username == username]
+def cities_occupied_by_person(person_name):
+    print(f"cities_occupied_by_person: {person_name}")
+    result = [city for city in city_locs() if city.username == person_name]
     # order by start_year
     result.sort(key=lambda x: x.start_year)
     return result

@@ -3,10 +3,10 @@ from fasthtml.common import *
 from monsterui.all import *
 from geopy.exc import GeocoderTimedOut
 from models import (
-    DB_PATH, city_locs, cities_occupied_by_person, people_in_year
+    DB_PATH, city_locs, cities_occupied_by_person, people_in_year, people_colors
 )
 from ui_components import (
-    city_buttons, get_distinct_users, Years, scroll_position, MarkedUsers
+    create_people, city_buttons, get_distinct_users, Years, scroll_position, MarkedUsers
 )
 from map_utils import get_active_city, add_person_markers, geolocator
 from constants import SELECTED_CITY_NAME_KEY, ACTIVE_CITY_ID_KEY
@@ -20,7 +20,7 @@ map_init_js = Script(src="/static/js/map-init.js")
 app, rt = fast_app(
     db_file=DB_PATH,
     hdrs=[
-        Theme.blue.headers(),
+        Theme.slate.headers(),
         mapbox_css,
         mapbox_js,
         map_init_js
@@ -56,6 +56,7 @@ def select_person(selected_person: str, sess):
             sess[ACTIVE_CITY_ID_KEY] = city.id
             marker_script = add_person_markers(sess)
             people_cities_for_year = people_in_year(city.start_year)
+            people_colors[city.username] = city.color
             break
     if ACTIVE_CITY_ID_KEY in sess:
         active_city = city_locs.get(sess[ACTIVE_CITY_ID_KEY])
@@ -72,6 +73,8 @@ def set_people_shown_on_map(sess):
 
 @rt('/change-city/{city_id}')
 def change_city(city_id: int, zoom: int, sess):
+    global people_colors
+    print(f"people_colors: {people_colors}")
     set_people_shown_on_map(sess)
     city = city_locs.get(city_id)
     try:
@@ -159,12 +162,11 @@ function get_zoom() {{
     return Math.round(map.getZoom());
 }}
 
-map.on('zoom', () => {{
-  const newZoom = map.getZoom();
-  console.log('Zoom changed to:', Math.round(newZoom));
-}});
-
 {add_person_markers(sess)}
+
+let people_colors = {{
+    {', '.join([f"'{k}': '{v}'" for k, v in people_colors.items()])}
+}}
         """)
     )
 

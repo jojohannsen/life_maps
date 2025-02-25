@@ -1,4 +1,5 @@
 born: 1937
+color: amber
 18,Miami, AZ
 5,Tucson, AZ
 44,Gadsden, AZ
