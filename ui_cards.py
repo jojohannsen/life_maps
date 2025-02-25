@@ -1,0 +1,60 @@
+from fasthtml.common import *
+from monsterui.all import *
+from models import _years_str, CityLocation
+
+def make_single_bar_div(city_location, pixel_width, bright_color, subdued_color, index):
+    """
+    Creates a single bar div representing a city in a person's timeline.
+    
+    Parameters:
+    -----------
+    city_location : CityLocation
+        The city object containing name, start_year, and years data
+    pixel_width : int
+        The width of the bar in pixels, proportional to years spent in the city
+    bright_color : str
+        The CSS class for the bright color used on hover
+    subdued_color : str
+        The CSS class for the subdued color used by default
+    index : int
+        The position of this bar in the sequence, used for styling
+        
+    Returns:
+    --------
+    Div
+        A styled div element representing the city with tooltip information
+    """
+    return Div(
+        cls=f"h-2 group-hover:{bright_color} hover:{bright_color} {subdued_color} {'ml-2' if (index == 0) else ''} {'mt-0' if (index%2) == 0 else 'mt-2'} inline-block", 
+        style=f"width: {pixel_width}px", 
+        uk_tooltip=f"{_years_str(city_location.start_year, city_location.years)}<br>{city_location.name}"
+    )
+
+def make_bar_divs(cities_occupied_by_person, pixel_widths, color):
+    bright_color, subdued_color = f"bg-{color}-500", f"bg-{color}-200"
+    return Div(
+        *[make_single_bar_div(city, width, bright_color, subdued_color, i) 
+          for i, (width, city) in enumerate(zip(pixel_widths, cities_occupied_by_person))],
+        cls="flex flex-row justify-between h-4"
+    )
+
+def make_card(name, birth_year, color, cities_occupied_by_person):
+    # get proportion of years to total years
+    total_years = sum(city.years for city in cities_occupied_by_person)
+    proportion_of_years = [city.years / total_years for city in cities_occupied_by_person]
+    TOTAL_PIXEL_WIDTH = 180
+    pixel_widths = [int(p * TOTAL_PIXEL_WIDTH) for p in proportion_of_years]
+    bar_divs = make_bar_divs(cities_occupied_by_person, pixel_widths, color)
+    print(f"{name} bar_divs: {bar_divs}")
+    return Div(
+            Div(name, cls="mt-1 ml-2 font-serif bold text-sm"),
+            DivLAligned(
+                P(f"{birth_year}", cls="font-sans ml-2 italic text-xs text-gray-400 inline-block"),
+                Div(
+                    *bar_divs,
+                    cls="flex flex-row justify-between h-4"
+                ),
+                cls="mb-1 ml-1",
+            ),
+            cls=(CardT.hover, "max-w-sm", "m-4", "w-60", "group")  # Added 'group' class
+        )
