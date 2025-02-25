@@ -18,10 +18,6 @@ def IconCard(icon_name):
         cls=(CardT.hover, "cursor-pointer")  # Use CardT.hover for proper hover effect
     )
 
-def make_colors(color):
-    return f"bg-{color}-500", f"bg-{color}-200"
-
-
 def make_single_bar_div(city_location, pixel_width, bright_color, subdued_color, index):
     """
     Creates a single bar div representing a city in a person's timeline.
@@ -47,10 +43,11 @@ def make_single_bar_div(city_location, pixel_width, bright_color, subdued_color,
     return Div(
         cls=f"h-2 group-hover:{bright_color} hover:{bright_color} {subdued_color} {'ml-2' if (index == 0) else ''} {'mt-0' if (index%2) == 0 else 'mt-2'} inline-block", 
         style=f"width: {pixel_width}px", 
-        uk_tooltip=f"{city_location.name} {_years_str(city_location.start_year, city_location.years)}"
+        uk_tooltip=f"{_years_str(city_location.start_year, city_location.years)}<br>{city_location.name}"
     )
 
-def make_bar_divs(cities_occupied_by_person, pixel_widths, bright_color, subdued_color):
+def make_bar_divs(cities_occupied_by_person, pixel_widths, color):
+    bright_color, subdued_color = f"bg-{color}-500", f"bg-{color}-200"
     return Div(
         *[make_single_bar_div(city, width, bright_color, subdued_color, i) 
           for i, (width, city) in enumerate(zip(pixel_widths, cities_occupied_by_person))],
@@ -58,13 +55,12 @@ def make_bar_divs(cities_occupied_by_person, pixel_widths, bright_color, subdued
     )
 
 def make_card(name, birth_year, color, cities_occupied_by_person):
-    bright_color, subdued_color = make_colors(color)
     # get proportion of years to total years
     total_years = sum(city.years for city in cities_occupied_by_person)
     proportion_of_years = [city.years / total_years for city in cities_occupied_by_person]
     TOTAL_PIXEL_WIDTH = 180
     pixel_widths = [int(p * TOTAL_PIXEL_WIDTH) for p in proportion_of_years]
-    bar_divs = make_bar_divs(cities_occupied_by_person, pixel_widths, bright_color, subdued_color)
+    bar_divs = make_bar_divs(cities_occupied_by_person, pixel_widths, color)
     print(f"{name} bar_divs: {bar_divs}")
     return Div(
             Div(name, cls="mt-1 ml-2 font-serif bold text-sm"),
