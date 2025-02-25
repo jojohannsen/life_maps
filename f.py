@@ -25,7 +25,7 @@ def make_colors(color):
 def make_bar_divs(cities_occupied_by_person, pixel_widths, bright_color, subdued_color):
     return Div(
         *[Div(title=f"{p[1].name} {_years_str(p[1].start_year, p[1].years)}", cls=f"h-2 group-hover:{bright_color} hover:{bright_color} {subdued_color} {'ml-2' if (i == 0) else ''} {'mt-0' if (i%2) == 0 else 'mt-2'} inline-block", 
-              style=f"width: {p[0]}px") for i,p in enumerate(zip(pixel_widths, cities_occupied_by_person))],
+              style=f"width: {p[0]}px", uk_tooltip=f"{p[1].name} {_years_str(p[1].start_year, p[1].years)}") for i,p in enumerate(zip(pixel_widths, cities_occupied_by_person))],
         cls="flex flex-row justify-between h-4"
     )
 
