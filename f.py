@@ -45,10 +45,9 @@ def make_single_bar_div(city_location, pixel_width, bright_color, subdued_color,
         A styled div element representing the city with tooltip information
     """
     return Div(
-        title=f"{city_location.name} {_years_str(city_location.start_year, city_location.years)}", 
         cls=f"h-2 group-hover:{bright_color} hover:{bright_color} {subdued_color} {'ml-2' if (index == 0) else ''} {'mt-0' if (index%2) == 0 else 'mt-2'} inline-block", 
         style=f"width: {pixel_width}px", 
-        uk_tooltip=f"{city_location.name}<br><span style='font-family: Courier, monospace;'>{_years_str(city_location.start_year, city_location.years)}</span>"
+        uk_tooltip=f"{city_location.name} {_years_str(city_location.start_year, city_location.years)}"
     )
 
 def make_bar_divs(cities_occupied_by_person, pixel_widths, bright_color, subdued_color):
