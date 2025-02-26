@@ -277,7 +277,7 @@ def LeftNav(selected_person, active_city, script=None):
         # Include city selection JavaScript
         Script(src="/static/js/city-selection.js"),
         # "Life on Map" unobtrusive text, light gray
-        P('Family Map, version 0.1', cls='ml-2 text-xs text-gray-500'),
+        P('Family Map, version 0.2', cls='ml-2 text-xs text-gray-500'),
         Grid(*get_distinct_users(selected_person, active_city), cls='gap-1', cols=1), 
         cls="p-2 h-screen overflow-y-auto",
         id="buttons-container",
