@@ -34,9 +34,9 @@ def make_city_button(city, selected_city: CityLocation | None = None,
     middle_percent = round(single_percent * city.years)
     right_percent = 100 - left_percent - middle_percent
     button_style = 'bg-blue-500 text-white' if selected_city and city.id == selected_city.id else 'bg-slate-50'
-
+    text_color = 'text-white' if selected_city and city.id == selected_city.id else 'text-gray-400'
     button = Button(
-        Div(DivLAligned(city.name, cls="text-gray-400"), 
+        Div(DivLAligned(city.name, cls=text_color), 
             Div(Div(cls="h-1 bg-blue-200", style=f"width: {left_percent}%"),
                 Div(cls=f"h-1 bg-{color}-400", style=f"width: {middle_percent}%"),
                 Div(cls="h-1 bg-blue-200", style=f"width: {right_percent}%"),
