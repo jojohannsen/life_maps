@@ -6,9 +6,9 @@ from models import (
     DB_PATH, city_locs, cities_occupied_by_person, people_in_year, people_colors
 )
 from ui_components import (
-    create_people, city_buttons, get_distinct_users, Years, scroll_position, MarkedUsers
+    create_people, city_buttons, Years, scroll_position, MarkedUsers, LeftNav
 )
-from map_utils import get_active_city, add_person_markers, geolocator
+from map_utils import add_person_markers, geolocator
 from constants import SELECTED_CITY_NAME_KEY, ACTIVE_CITY_ID_KEY
 
 # Create FastHTML app with blue theme and add Mapbox CSS/JS
@@ -35,7 +35,7 @@ def PersonVisualState(name: str, is_shown_above_map: bool = False):
 
 @rt('/select-person')
 def select_person(selected_person: str, sess):
-    print(f"select_person: {selected_person}, {sess[SELECTED_CITY_NAME_KEY]=}")
+    print(f"ENDPOINT /select-person: {selected_person}, {sess[SELECTED_CITY_NAME_KEY]=}")
     sess['selected_person'] = selected_person
     if selected_person not in L(sess['people_shown_on_map']).attrgot('name'):
         sess['people_shown_on_map'].append(PersonVisualState(name=selected_person, is_shown_above_map=True))
@@ -60,7 +60,7 @@ def select_person(selected_person: str, sess):
             break
     if ACTIVE_CITY_ID_KEY in sess:
         active_city = city_locs.get(sess[ACTIVE_CITY_ID_KEY])
-    return (city_buttons(selected_person, active_city), 
+    return (LeftNav(selected_person, active_city), 
             MapHeader(sess, people_cities_for_year, marker_script))
  
 def set_people_shown_on_map(sess):
@@ -73,8 +73,6 @@ def set_people_shown_on_map(sess):
 
 @rt('/change-city/{city_id}')
 def change_city(city_id: int, zoom: int, sess):
-    global people_colors
-    print(f"people_colors: {people_colors}")
     set_people_shown_on_map(sess)
     city = city_locs.get(city_id)
     try:
@@ -92,8 +90,7 @@ def change_city(city_id: int, zoom: int, sess):
         sess['years_selected'] = list(range(city.start_year, city.start_year + city.years))
         #scroll_script = f"scrollToButton('y-{city.start_year + city.years - 1}', 'center')\n"
         scroll_script = f"scrollToButton('y-{city.start_year}', 'center')"
-        return (Div(
-            Script(f"""
+        script = Script(f"""
                 {add_person_markers(sess)}
                 {scroll_script}
                 map.flyTo({{
@@ -101,9 +98,8 @@ def change_city(city_id: int, zoom: int, sess):
                     zoom: {zoom},
                     essential: true
                 }});
-            """, id="move-map"),
-            city_buttons(sess['selected_person'], city)
-        ), MapHeader(sess, people_in_year(city.start_year)))
+            """, id="move-map")
+        return LeftNav(sess['selected_person'], city, script), MapHeader(sess, people_in_year(city.start_year))
     except GeocoderTimedOut:
         return "Geocoding timed out"
 
@@ -179,11 +175,7 @@ let people_colors = {{
     
     layout = Div(
         scroll_position(),
-        Div(
-            get_distinct_users(sess['selected_person']), 
-            city_buttons(sess['selected_person'], active_city), 
-            cls="p-2 h-screen overflow-y-auto"
-        ),
+        LeftNav(sess['selected_person'], active_city),
         right_content,
         cls="flex h-screen overflow-hidden"
     )

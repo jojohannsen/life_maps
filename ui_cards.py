@@ -26,7 +26,7 @@ def make_single_bar_div(city_location, pixel_width, color, index):
     return Div(
         cls=f"h-2 group-hover:{bright_color} hover:{bright_color} {subdued_color} {'ml-2' if (index == 0) else ''} {'mt-0' if (index%2) == 0 else 'mt-2'} inline-block", 
         style=f"width: {pixel_width}px", 
-        uk_tooltip=f"title:{_years_str(city_location.start_year, city_location.years)}<br>{city_location.name}; cls: bg-white text-gray-800 uk-active;"
+        uk_tooltip=f"title:{_years_str(city_location.start_year, city_location.years)}<br>{city_location.name}; cls: {subdued_color} text-gray-800 uk-active;"
     )
 
 def make_bar_divs(cities_occupied_by_person, pixel_widths, color):
@@ -43,7 +43,7 @@ def make_card(name, birth_year, color, cities_occupied_by_person):
     TOTAL_PIXEL_WIDTH = 180
     pixel_widths = [int(p * TOTAL_PIXEL_WIDTH) for p in proportion_of_years]
     bar_divs = make_bar_divs(cities_occupied_by_person, pixel_widths, color)
-    print(f"{name} bar_divs: {bar_divs}")
+
     return A(
             Div(
                 Div(name, cls="mt-1 ml-2 font-serif bold text-sm"),
@@ -55,7 +55,7 @@ def make_card(name, birth_year, color, cities_occupied_by_person):
                     ),
                     cls="mb-1 ml-1",
                 ),
-                cls=(CardT.hover, "max-w-sm", "m-4", "w-60", "group", "cursor-pointer")  # Added 'cursor-pointer'
+                cls=(CardT.hover, "max-w-sm", "m-1", "w-60", "group", "cursor-pointer")  # Added 'cursor-pointer'
             ),
             href="/select-person",
             hx_post="/select-person",

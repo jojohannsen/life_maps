@@ -2,6 +2,7 @@ from fasthtml.common import *
 from monsterui.all import *
 from models import cities_occupied_by_person, CityLocation, people_colors
 from models import person_years_in_city
+from models import db
 from ui_cards import make_card
 
 # UI Constants
@@ -13,29 +14,31 @@ def city_buttons(selected_person: str, selected_city: CityLocation | None = None
     if user_city_data:
         selected_person_start_year = min(L(user_city_data).attrgot('start_year').map(int))
         selected_person_total_years = sum(L(user_city_data).attrgot('years').map(int))
-        buttons = [make_city_button(city, selected_city, selected_person_start_year, selected_person_total_years) for city in user_city_data]
+        color = people_colors.get(selected_person, "blue") 
+        buttons = [make_city_button(city, selected_city, selected_person_start_year, selected_person_total_years, color) for city in user_city_data]
     else:
         buttons = []
 
     return Div(
         *buttons,
         id='city-buttons-container',
-        cls='space-y-2'
+        cls='ml-8 space-y-2'
     )
 
 def make_city_button(city, selected_city: CityLocation | None = None, 
                     selected_person_start_year: int | None = None,
-                    selected_person_total_years: int | None = None):
+                    selected_person_total_years: int | None = None,
+                    color: str = "blue"):
     single_percent = 100 / selected_person_total_years
     left_percent = round(single_percent * (city.start_year - selected_person_start_year))
     middle_percent = round(single_percent * city.years)
     right_percent = 100 - left_percent - middle_percent
-    button_style = 'bg-blue-500 text-white' if selected_city and city.id == selected_city.id else 'bg-blue-50'
+    button_style = 'bg-blue-500 text-white' if selected_city and city.id == selected_city.id else 'bg-slate-50'
 
     button = Button(
-        Div(DivLAligned(city.name), 
+        Div(DivLAligned(city.name, cls="text-gray-400"), 
             Div(Div(cls="h-1 bg-blue-200", style=f"width: {left_percent}%"),
-                Div(cls="h-1 bg-green-400", style=f"width: {middle_percent}%"),
+                Div(cls=f"h-1 bg-{color}-400", style=f"width: {middle_percent}%"),
                 Div(cls="h-1 bg-blue-200", style=f"width: {right_percent}%"),
                 cls="w-full flex"),
             cls="w-full"),
@@ -53,9 +56,7 @@ def make_city_button(city, selected_city: CityLocation | None = None,
         id=f'citybutton-{city.id}',
     )
 
-def get_distinct_users(selected_person: str):
-    from models import db
-    
+def get_distinct_users(selected_person: str, selected_city: CityLocation | None = None):
     result = db.query("select distinct username from city_location")
     people = [row['username'] for row in result]
     people_start_years = {}
@@ -86,7 +87,8 @@ def get_distinct_users(selected_person: str):
     for person in people:
         # Get color from people_colors
         color = people_colors.get(person, "blue")  # Default to blue if no color defined
-        
+        cb = city_buttons(person, selected_city) if person == selected_person else None
+        print(f"{person=}, {selected_person=}, {cb=}")
         # Create card
         card = make_card(
             name=person,
@@ -95,6 +97,8 @@ def get_distinct_users(selected_person: str):
             cities_occupied_by_person=people_data[person]['cities']
         )
         cards.append(card)
+        if cb:
+            cards.append(cb)
     
     return Div(*cards, cls='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2')
 
@@ -266,10 +270,19 @@ def scroll_position():
     });
     """) 
 
+def LeftNav(selected_person, active_city, script=None):
+    return Div(
+        script if script else Script(),
+        # "Life on Map" unobtrusive text, light gray
+        P('Family Map, version 0.1', cls='ml-2 text-xs text-gray-500'),
+        Grid(*get_distinct_users(selected_person, active_city), cls='gap-1', cols=1), 
+        cls="p-2 h-screen overflow-y-auto",
+        id="buttons-container",
+        hx_swap_oob="true"
+    )
 
 def create_people():
     return Div(
-        Button('open modal', onclick='my_modal_1.showModal()', cls='btn'),
         Dialog(
             Div(
                 H3('Hello!', cls='text-lg font-bold'),
