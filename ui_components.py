@@ -46,6 +46,7 @@ def make_city_button(city, selected_city: CityLocation | None = None,
         hx_vals="js:{zoom: get_zoom()}",
         hx_get=f'/change-city/{city.id}',
         hx_target='#city-buttons-container',
+        id=f'city{city.id}',
         cls=f'w-fulltext-left justify-start hover:bg-muted {CITY_NAV_WIDTH} {button_style}')
 
     return DivLAligned(
