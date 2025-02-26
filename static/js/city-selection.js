@@ -5,12 +5,12 @@
 function select_city(cityName) {
     console.log(`City selected: ${cityName}`);
     
-    // Find any city button with this city name
+    // Find any city button with this city name using the city-name class
     const cityButtons = document.querySelectorAll('#city-buttons-container button');
     for (const button of cityButtons) {
-        // Check the text content of the div inside the button that contains the city name
-        const cityDiv = button.querySelector('div > div.uk-flex');
-        if (cityDiv && cityDiv.textContent.trim().includes(cityName)) {
+        // Check the text content of the div with city-name class
+        const cityNameDiv = button.querySelector('.city-name');
+        if (cityNameDiv && cityNameDiv.textContent.trim() === cityName) {
             console.log(`Found button for ${cityName}`);
             // Simulate a click on the button
             button.click();
