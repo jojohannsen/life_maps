@@ -1,28 +1,22 @@
 /**
  * Handles city selection when a timeline bar is clicked
- * @param {string} cityName - The name of the city to select
+ * @param {number} cityId - The ID of the city to select
  */
-function select_city(cityName) {
-    console.log(`City selected: ${cityName}`);
+function select_city(cityId) {
+    console.log(`City selected by ID: ${cityId}`);
     
-    // First try to find the button by city name
-    const cityButtons = document.querySelectorAll('#city-buttons-container button');
-    for (const button of cityButtons) {
-        // Check the text content of the div with city-name class
-        const cityNameDiv = button.querySelector('.city-name');
-        if (cityNameDiv && cityNameDiv.textContent.trim() === cityName) {
-            console.log(`Found button for ${cityName}`);
-            // Simulate a click on the button
-            button.click();
-            return;
-        }
+    // Find the button with the matching city ID
+    const cityButton = document.getElementById(`city${cityId}`);
+    if (cityButton) {
+        console.log(`Found button for city ID ${cityId}`);
+        // Simulate a click on the button
+        cityButton.click();
+        return;
     }
     
-    // If we couldn't find by name, try to find by ID (requires backend to have set city IDs)
-    // This is a fallback in case the city name in the timeline doesn't exactly match the button
+    // If no button found, log available buttons
+    const cityButtons = document.querySelectorAll('#city-buttons-container button');
     const cityIds = Array.from(cityButtons).map(button => button.id).filter(id => id.startsWith('city'));
     console.log(`Available city buttons: ${cityIds.join(', ')}`);
-    
-    // If no button found, we could trigger an HTMX request to load this city
-    console.log(`No button found for city: ${cityName}`);
+    console.log(`No button found for city ID: ${cityId}`);
 }
