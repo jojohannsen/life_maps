@@ -186,7 +186,7 @@ def ScrollableYearsButtons(years, years_selected):
     buttons = YearsButtons(years, years_selected, base_css, selected_css, unselected_css)
     
     script = """
-    document.getElementById('buttons-container').addEventListener('scroll', function() {
+    document.getElementById('years-buttons-container').addEventListener('scroll', function() {
         saveScrollPosition();
     });
     """
@@ -194,7 +194,7 @@ def ScrollableYearsButtons(years, years_selected):
     return Div(
         *buttons,
         Script(script),
-        id='buttons-container',
+        id='years-buttons-container',
         cls='ml-8 mr-8 flex overflow-x-auto scroll-smooth no-scrollbar',
         style="""
             -ms-overflow-style: none; 
@@ -221,7 +221,7 @@ def Years(years, years_selected):
                id='scroll-right'),
         Script("""
             document.getElementById('scroll-left').addEventListener('click', () => {
-                document.getElementById('buttons-container').scrollBy({
+                document.getElementById('years-buttons-container').scrollBy({
                     left: -200,
                     behavior: 'smooth'
                 });
@@ -231,7 +231,7 @@ def Years(years, years_selected):
             });
             
             document.getElementById('scroll-right').addEventListener('click', () => {
-                document.getElementById('buttons-container').scrollBy({
+                document.getElementById('years-buttons-container').scrollBy({
                     left: 200,
                     behavior: 'smooth'
                 });
@@ -252,14 +252,14 @@ def Years(years, years_selected):
 def scroll_position():
     return Script("""
     const saveScrollPosition = () => {
-        const scrollPosition = document.getElementById('buttons-container').scrollLeft;
-        localStorage.setItem('buttonsScrollPosition', scrollPosition);
+        const scrollPosition = document.getElementById('years-buttons-container').scrollLeft;
+        localStorage.setItem('yearsScrollPosition', scrollPosition);
     };
 
     const restoreScrollPosition = () => {
-        const savedPosition = localStorage.getItem('buttonsScrollPosition');
+        const savedPosition = localStorage.getItem('yearsScrollPosition');
         if (savedPosition !== null) {
-            document.getElementById('buttons-container').scrollTo({
+            document.getElementById('years-buttons-container').scrollTo({
                 left: parseInt(savedPosition),
                 behavior: 'instant'
             });
