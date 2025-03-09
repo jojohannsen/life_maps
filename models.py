@@ -45,8 +45,11 @@ def person_years_in_city(person, selected_person, first_selected_year, lighter_c
             if person == selected_person:
                 year_spans = []
                 for year_range, city in zip(year_strs, city_entries):
-                    if city.start_year == first_selected_year:
-                        year_spans.append(Span(year_range, cls="p-0 text-xs {lighter_color}"))
+                    # Check if the selected year falls within this city's year range
+                    is_year_in_range = (first_selected_year is not None and 
+                                        city.start_year <= first_selected_year < city.start_year + city.years)
+                    if is_year_in_range:
+                        year_spans.append(Span(year_range, cls="p-0 text-xs", style=f"color: {lighter_color}"))
                     else:
                         year_spans.append(Span(year_range, cls="p-0 text-xs text-gray-300"))
                     
